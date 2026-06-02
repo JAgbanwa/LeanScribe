@@ -1,0 +1,7 @@
+<ROOT>
+    <!-- 'NAAM' should be lower case like that -> 'naam'-->
+    <BAAN>
+        <NAAM>Middelheimlaan</NAAM>
+        <lengte>500</lengte>
+    </BAAN>
+</ROOT>

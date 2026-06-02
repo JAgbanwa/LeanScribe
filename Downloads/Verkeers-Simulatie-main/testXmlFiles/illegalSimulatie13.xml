@@ -1,0 +1,15 @@
+<ROOT>
+    <!-- de element naam "dikte" is geen geldige element -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+
+    <VOERTUIG>
+        <dikte>test</dikte>
+        <baan>Middelheimlaan</baan>
+        <positie>300</positie>
+        <type>bus</type>
+    </VOERTUIG>
+
+</ROOT>

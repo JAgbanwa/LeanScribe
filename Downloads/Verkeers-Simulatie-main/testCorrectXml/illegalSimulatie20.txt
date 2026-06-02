@@ -1,0 +1,1 @@
+XML PARTIAL IMPORT: positie van de voertuig moet kleiner zijn dan de baan!

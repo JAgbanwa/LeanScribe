@@ -1,0 +1,14 @@
+<ROOT>
+    <!-- wachttijd van de BUSHALTE moet positief zijn -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+
+    <BUSHALTE>
+        <baan>Middelheimlaan</baan>
+        <positie>300</positie>
+        <wachttijd>-20</wachttijd>
+    </BUSHALTE>
+
+</ROOT>

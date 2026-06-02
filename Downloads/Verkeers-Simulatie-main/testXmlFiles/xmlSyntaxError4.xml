@@ -1,0 +1,13 @@
+<ROOT>
+    <!--The opening tag VERKEERSLICHT is missing a '>' -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+
+    <VERKEERSLICHT
+        <baan>Middelheimlaan</baan>
+        <positie>300</positie>
+        <cyclus>20</cyclus>
+    </VERKEERSLICHT>
+</ROOT>

@@ -1,0 +1,10 @@
+<ROOT>
+    <!-- een simulatie moet een BAAN bevatten -->
+
+    <VOERTUIG>
+        <baan>Middelheimlaan</baan>
+        <positie>300</positie>
+        <type>bus</type>
+    </VOERTUIG>
+
+</ROOT>

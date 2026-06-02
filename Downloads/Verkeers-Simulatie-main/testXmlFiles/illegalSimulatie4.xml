@@ -1,0 +1,16 @@
+<ROOT>
+    <!-- BUSHALTE bevat geen element wachttijd -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+    <BUSHALTE>
+        <baan>Middelheimlaan</baan>
+        <positie>300</positie>
+    </BUSHALTE>
+</ROOT>
+
+
+
+
+

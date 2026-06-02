@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="VerkeersSimulatie"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/student/Documents/project ps/verkeersSimulatie/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/student/Documents/project ps/verkeersSimulatie/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/student/Documents/project ps/verkeersSimulatie/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="VS_debug">
+				<Option output="/home/student/Documents/project ps/verkeersSimulatie/cmake-build-debug/VS_debug" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/student/Documents/project ps/verkeersSimulatie/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/student/Documents/project ps/verkeersSimulatie/gtest/include"/>
+					<Add directory="/usr/include/c++/8"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/8"/>
+					<Add directory="/usr/include/c++/8/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/8/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/8/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 VS_debug"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="VS_debug/fast">
+				<Option output="/home/student/Documents/project ps/verkeersSimulatie/cmake-build-debug/VS_debug" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/student/Documents/project ps/verkeersSimulatie/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/student/Documents/project ps/verkeersSimulatie/gtest/include"/>
+					<Add directory="/usr/include/c++/8"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/8"/>
+					<Add directory="/usr/include/c++/8/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/8/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/8/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 VS_debug/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="VS">
+				<Option output="/home/student/Documents/project ps/verkeersSimulatie/cmake-build-debug/VS" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/student/Documents/project ps/verkeersSimulatie/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/student/Documents/project ps/verkeersSimulatie/gtest/include"/>
+					<Add directory="/usr/include/c++/8"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/8"/>
+					<Add directory="/usr/include/c++/8/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/8/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/8/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 VS"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="VS/fast">
+				<Option output="/home/student/Documents/project ps/verkeersSimulatie/cmake-build-debug/VS" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/student/Documents/project ps/verkeersSimulatie/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/student/Documents/project ps/verkeersSimulatie/gtest/include"/>
+					<Add directory="/usr/include/c++/8"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/8"/>
+					<Add directory="/usr/include/c++/8/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/8/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/8/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 VS/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/student/Documents/project\ ps/verkeersSimulatie/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/baan.cpp">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/baan.h">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/main.cpp">
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/simulatie.cpp">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/simulatie.h">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/testMain.cpp">
+			<Option target="VS_debug"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/testen/baanTest.h">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/testen/simulatieTest.h">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/testen/verkeerslichtTest.h">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/testen/voertuigTest.h">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/testen/voertuiggeneratorTest.h">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/tinystr.cpp">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/tinystr.h">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/tinyxml.cpp">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/tinyxml.h">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/tinyxmlerror.cpp">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/tinyxmlparser.cpp">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/verkeersSimulatie.cpp">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/verkeersSimulatie.h">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/verkeerslicht.cpp">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/verkeerslicht.h">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/voertuig.cpp">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/voertuig.h">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/voertuigTest1.h">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/voertuiggenerator.cpp">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/voertuiggenerator.h">
+			<Option target="VS_debug"/>
+			<Option target="VS"/>
+		</Unit>
+		<Unit filename="/home/student/Documents/project ps/verkeersSimulatie/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

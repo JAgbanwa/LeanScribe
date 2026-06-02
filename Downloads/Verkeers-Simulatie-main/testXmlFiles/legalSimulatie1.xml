@@ -1,0 +1,16 @@
+<ROOT>
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>150</lengte>
+    </BAAN>
+    <VERKEERSLICHT>
+        <baan>Middelheimlaan</baan>
+        <positie>50</positie>
+        <cyclus>2</cyclus>
+    </VERKEERSLICHT>
+    <VOERTUIG>
+        <baan>Middelheimlaan</baan>
+        <positie>0</positie>
+        <type>politiecombi</type>
+    </VOERTUIG>
+</ROOT>

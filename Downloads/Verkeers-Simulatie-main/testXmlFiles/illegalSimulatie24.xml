@@ -1,0 +1,13 @@
+    <!-- een xml bestand moet een ROOT bevatten -->
+
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+
+    <VOERTUIG>
+        <baan>Middelheimlaan</baan>
+        <positie>300</positie>
+        <type>bus</type>
+    </VOERTUIG>
+

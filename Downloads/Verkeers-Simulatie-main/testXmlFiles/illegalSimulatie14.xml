@@ -1,0 +1,15 @@
+<ROOT>
+    <!-- VOERTUIG heeft geen geldige type -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+
+    <VOERTUIG>
+        <baan>Middelheimlaan</baan>
+        <positie>300</positie>
+        <type>huis</type>
+    </VOERTUIG>
+
+</ROOT>
+

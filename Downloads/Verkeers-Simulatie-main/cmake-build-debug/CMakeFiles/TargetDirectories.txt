@@ -1,0 +1,4 @@
+/Users/jamalmac/Downloads/Verkeers-Simulatie-main/cmake-build-debug/CMakeFiles/VS.dir
+/Users/jamalmac/Downloads/Verkeers-Simulatie-main/cmake-build-debug/CMakeFiles/VS_debug.dir
+/Users/jamalmac/Downloads/Verkeers-Simulatie-main/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/jamalmac/Downloads/Verkeers-Simulatie-main/cmake-build-debug/CMakeFiles/rebuild_cache.dir

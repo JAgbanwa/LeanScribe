@@ -1,0 +1,24 @@
+<ROOT>
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>150</lengte>
+    </BAAN>
+    <BAAN>
+        <naam>Turnhoutsebaan</naam>
+        <lengte>200</lengte>
+    </BAAN>
+    <VOERTUIG>
+        <baan>Middelheimlaan</baan>
+        <positie>0</positie>
+        <type>bus</type>
+    </VOERTUIG>
+    <VOERTUIG>
+        <baan>Turnhoutsebaan</baan>
+        <positie>0</positie>
+        <type>auto</type>
+    </VOERTUIG>
+    <KRUISPUNT>
+        <baan positie="50">Middelheimlaan</baan>
+        <baan positie="100">Turnhoutsebaan</baan>
+    </KRUISPUNT>
+</ROOT>

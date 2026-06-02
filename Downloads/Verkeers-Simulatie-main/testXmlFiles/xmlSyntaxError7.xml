@@ -1,0 +1,12 @@
+<ROOT>
+    <!--The opening tag KRUISPUNT is missing a '>' -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+
+    <KRUISPUNT
+        <baan positie="250">Middelheimlaan</baan>
+        <baan positie="500">Turnhoutsebaan</baan>
+    </KRUISPUNT>
+        </ROOT>

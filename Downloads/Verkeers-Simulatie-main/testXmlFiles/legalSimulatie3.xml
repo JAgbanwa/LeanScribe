@@ -1,0 +1,33 @@
+<ROOT>
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>300</lengte>
+    </BAAN>
+    <VOERTUIG>
+        <baan>Middelheimlaan</baan>
+        <positie>0</positie>
+        <type>auto</type>
+    </VOERTUIG>
+    <VOERTUIG>
+        <baan>Middelheimlaan</baan>
+        <positie>10</positie>
+        <type>bus</type>
+    </VOERTUIG>
+    <VERKEERSLICHT>
+        <baan>Middelheimlaan</baan>
+        <positie>200</positie>
+        <cyclus>10</cyclus>
+    </VERKEERSLICHT>
+    <BUSHALTE>
+        <baan>Middelheimlaan</baan>
+        <positie>100</positie>
+        <wachttijd>10</wachttijd>
+    </BUSHALTE>
+    <BUSHALTE>
+        <baan>Middelheimlaan</baan>
+        <positie>250</positie>
+        <wachttijd>10</wachttijd>
+    </BUSHALTE>
+
+
+</ROOT>

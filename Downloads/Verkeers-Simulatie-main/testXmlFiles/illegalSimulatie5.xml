@@ -1,0 +1,18 @@
+<ROOT>
+    <!-- eerste element baan heeft geen attribute positie -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+    <BAAN>
+        <naam>Turnhoutsebaan</naam>
+        <lengte>700</lengte>
+    </BAAN>
+
+    <KRUISPUNT>
+        <baan >Middelheimlaan</baan>
+        <baan positie="500">Turnhoutsebaan</baan>
+    </KRUISPUNT>
+
+</ROOT>
+

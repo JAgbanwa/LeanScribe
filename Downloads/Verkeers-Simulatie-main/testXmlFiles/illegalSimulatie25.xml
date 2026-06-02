@@ -1,0 +1,17 @@
+<!-- een xml bestand mag geen voertuigen hebben met dezelfde posities! -->
+<ROOT>
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>150</lengte>
+    </BAAN>
+    <VOERTUIG>
+        <baan>Middelheimlaan</baan>
+        <positie>20</positie>
+        <type>politiecombi</type>
+    </VOERTUIG>
+    <VOERTUIG>
+        <baan>Middelheimlaan</baan>
+        <positie>20</positie>
+        <type>politiecombi</type>
+    </VOERTUIG>
+</ROOT>

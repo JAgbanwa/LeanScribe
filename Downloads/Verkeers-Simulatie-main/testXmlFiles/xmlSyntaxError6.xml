@@ -1,0 +1,13 @@
+<ROOT>
+    <!--The opening tag VOERTUIG is missing a '>' -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+
+    <VOERTUIG
+        <baan>Middelheimlaan</baan>
+        <positie>0.0</positie>
+        <type>auto</type>
+    </VOERTUIG>
+</ROOT>

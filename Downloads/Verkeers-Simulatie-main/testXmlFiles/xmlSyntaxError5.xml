@@ -1,0 +1,14 @@
+<ROOT>
+    <!--The opening tag VOERTUIGGENERATOR is missing a '>' -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+
+    <VOERTUIGGENERATOR
+        <baan>Turnhoutsebaan</baan>
+        <frequentie>10</frequentie>
+        <type>auto</type>
+    </VOERTUIGGENERATOR>
+
+</ROOT>

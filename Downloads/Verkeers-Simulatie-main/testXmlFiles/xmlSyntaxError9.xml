@@ -1,0 +1,14 @@
+<ROOT>
+    <!--The opening tag VOERTUIG is starting with a '/' -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+
+    <VOERTUIG/>
+        <baan>Middelheimlaan</baan>
+        <positie>20.0</positie>
+        <type>bus</type>
+    </VOERTUIG>
+
+</ROOT>

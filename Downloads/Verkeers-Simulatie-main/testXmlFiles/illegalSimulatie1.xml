@@ -1,0 +1,8 @@
+<ROOT>
+    <!-- element naam mag geen nummer bevatten -->
+    <BAAN>
+        <naam>1215</naam>
+        <lengte>500</lengte>
+    </BAAN>
+</ROOT>
+

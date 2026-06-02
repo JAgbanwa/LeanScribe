@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="project_xml_parser"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="C:/Users/elias/Downloads/project xml parser/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="project_xml_parser">
+				<Option output="C:/Users/elias/Downloads/project xml parser/cmake-build-debug/project_xml_parser.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="C:/Users/elias/Downloads/project xml parser/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="C:/Qt/Tools/mingw810_64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++"/>
+					<Add directory="C:/Qt/Tools/mingw810_64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/x86_64-w64-mingw32"/>
+					<Add directory="C:/Qt/Tools/mingw810_64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/backward"/>
+					<Add directory="C:/Qt/Tools/mingw810_64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include"/>
+					<Add directory="C:/Qt/Tools/mingw810_64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed"/>
+					<Add directory="C:/Qt/Tools/mingw810_64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/../../../../x86_64-w64-mingw32/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 project_xml_parser"/>
+					<CompileFile command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="project_xml_parser/fast">
+				<Option output="C:/Users/elias/Downloads/project xml parser/cmake-build-debug/project_xml_parser.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="C:/Users/elias/Downloads/project xml parser/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="C:/Qt/Tools/mingw810_64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++"/>
+					<Add directory="C:/Qt/Tools/mingw810_64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/x86_64-w64-mingw32"/>
+					<Add directory="C:/Qt/Tools/mingw810_64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/backward"/>
+					<Add directory="C:/Qt/Tools/mingw810_64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include"/>
+					<Add directory="C:/Qt/Tools/mingw810_64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed"/>
+					<Add directory="C:/Qt/Tools/mingw810_64/bin/../lib/gcc/x86_64-w64-mingw32/8.1.0/../../../../x86_64-w64-mingw32/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 project_xml_parser/fast"/>
+					<CompileFile command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="C:/Users/elias/Downloads/project xml parser/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="C:/Users/elias/Downloads/project xml parser/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/Qt/Tools/mingw810_64/bin/mingw32-make.exe -f &quot;C:/Users/elias/Downloads/project xml parser/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/baan.cpp">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/baan.h">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/main.cpp">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/simulatie.cpp">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/simulatie.h">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/tinystr.cpp">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/tinystr.h">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/tinyxml.cpp">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/tinyxml.h">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/tinyxmlerror.cpp">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/tinyxmlparser.cpp">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/verkeerslicht.cpp">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/verkeerslicht.h">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/vliegtuigSimulatie.cpp">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/vliegtuigSimulatie.h">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/voertuig.cpp">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/voertuig.h">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/voertuiggenerator.cpp">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/voertuiggenerator.h">
+			<Option target="project_xml_parser"/>
+		</Unit>
+		<Unit filename="C:/Users/elias/Downloads/project xml parser/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

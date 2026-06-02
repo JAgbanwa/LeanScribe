@@ -1,0 +1,13 @@
+<ROOT>
+    <!-- frequentie van de VOERTUIGGENERATOR moet positief zijn -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+    <VOERTUIGGENERATOR>
+        <baan>Middelheimlaan</baan>
+        <frequentie>-10</frequentie>
+    </VOERTUIGGENERATOR>
+</ROOT>
+
+

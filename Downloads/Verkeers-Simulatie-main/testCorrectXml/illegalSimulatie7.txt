@@ -1,0 +1,1 @@
+XML PARTIAL IMPORT: frequentie van de voertuiggenerator moet positief zijn!

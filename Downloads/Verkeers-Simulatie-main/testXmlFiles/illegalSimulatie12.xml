@@ -1,0 +1,14 @@
+<ROOT>
+    <!-- de container naam HUIS is geen geldige container -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+
+    <HUIS>
+        <baan>Middelheimlaan</baan>
+        <positie>300</positie>
+        <type>bus</type>
+    </HUIS>
+
+</ROOT>

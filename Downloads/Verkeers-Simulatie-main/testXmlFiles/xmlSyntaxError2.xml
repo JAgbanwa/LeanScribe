@@ -1,0 +1,7 @@
+<ROOT
+    <!--The opening tag Root is missing a '>' -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>1000</lengte>
+    </BAAN>
+</ROOT>

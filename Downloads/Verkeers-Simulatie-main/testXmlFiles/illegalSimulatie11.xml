@@ -1,0 +1,14 @@
+<ROOT>
+    <!-- de baan van de VOERTUIG is niet geldig -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+
+    <VOERTUIG>
+        <baan>test</baan>
+        <positie>300</positie>
+        <type>bus</type>
+    </VOERTUIG>
+
+</ROOT>

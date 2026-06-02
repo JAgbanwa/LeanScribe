@@ -1,0 +1,14 @@
+<ROOT>
+    <!-- positie van de VOERTUIG moet positief zijn -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+
+    <VOERTUIG>
+        <baan>Middelheimlaan</baan>
+        <positie>-600</positie>
+        <type>bus</type>
+    </VOERTUIG>
+
+</ROOT>

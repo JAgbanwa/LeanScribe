@@ -1,0 +1,14 @@
+<ROOT>
+    <!-- VOERTUIGGENERATOR bevat geen element frequentie -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+    <VOERTUIGGENERATOR>
+        <baan>Middelheimlaan</baan>
+        <type>auto</type>
+    </VOERTUIGGENERATOR>
+</ROOT>
+
+
+

@@ -1,0 +1,13 @@
+<ROOT>
+    <!-- VERKEERSLICHT heeft geen element baan -->
+    <BAAN>
+        <naam>Middelheimlaan</naam>
+        <lengte>500</lengte>
+    </BAAN>
+
+    <VERKEERSLICHT>
+        <positie>300</positie>
+        <cyclus>10</cyclus>
+    </VERKEERSLICHT>
+
+</ROOT>

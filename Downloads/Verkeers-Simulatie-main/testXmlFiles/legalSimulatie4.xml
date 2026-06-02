@@ -1,0 +1,21 @@
+<ROOT>
+    <BAAN>
+        <naam>Turnhoutsebaan</naam>
+        <lengte>150</lengte>
+    </BAAN>
+    <VOERTUIG>
+        <baan>Turnhoutsebaan</baan>
+        <positie>0</positie>
+        <type>auto</type>
+    </VOERTUIG>
+    <VOERTUIG>
+        <baan>Turnhoutsebaan</baan>
+        <positie>10</positie>
+        <type>auto</type>
+    </VOERTUIG>
+    <VERKEERSLICHT>
+        <baan>Turnhoutsebaan</baan>
+        <positie>100</positie>
+        <cyclus>5</cyclus>
+    </VERKEERSLICHT>
+</ROOT>
