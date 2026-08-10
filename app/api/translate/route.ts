@@ -22,6 +22,16 @@ function json(body: unknown, status = 200): Response {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  if (process.env.EXPERT_MODE_ENABLED !== "true") {
+    return json(
+      {
+        error: "Expert translation is disabled on this public deployment.",
+        code: "EXPERT_MODE_DISABLED",
+      },
+      503,
+    );
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return json(

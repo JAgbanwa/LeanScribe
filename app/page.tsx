@@ -8,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return <LeanScribe />;
+  const expertEnabled =
+    process.env.EXPERT_MODE_ENABLED === "true" &&
+    Boolean(process.env.OPENAI_API_KEY);
+
+  return <LeanScribe expertEnabled={expertEnabled} />;
 }

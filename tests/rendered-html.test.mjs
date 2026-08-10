@@ -24,9 +24,9 @@ test("server-renders the LeanScribe converter", async () => {
   assert.match(html, /From formal proof/);
   assert.match(html, /Lean conversion workspace/);
   assert.match(html, /Paste Lean source/);
-  assert.match(html, /Proof-aware semantic translation/);
-  assert.match(html, /GPT-5\.6 SOL/);
-  assert.match(html, /Generate expert translation/);
+  assert.match(html, /Public local mode/);
+  assert.match(html, /Private conversion in your browser/);
+  assert.match(html, /Nothing is uploaded/);
   assert.match(html, /Natural-language(?:\s|<!--.*?-->)*Theorem/);
   assert.match(html, /Natural-language(?:\s|<!--.*?-->)*Lemma/);
   assert.match(html, /This theorem states: For every natural number n, n plus 0 equals n\./);
@@ -36,7 +36,7 @@ test("server-renders the LeanScribe converter", async () => {
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/);
 });
 
-test("expert endpoint fails safely when no API key is configured", async () => {
+test("expert endpoint fails safely when public mode is configured", async () => {
   const response = await dispatch("/api/translate", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -45,8 +45,22 @@ test("expert endpoint fails safely when no API key is configured", async () => {
 
   assert.equal(response.status, 503);
   assert.deepEqual(await response.json(), {
-    error: "Expert translation is not configured on this deployment.",
-    code: "AI_NOT_CONFIGURED",
+    error: "Expert translation is disabled on this public deployment.",
+    code: "EXPERT_MODE_DISABLED",
+  });
+});
+
+test("public mode rejects expert translation even if a key exists", async () => {
+  const response = await dispatch("/api/translate", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ source: "theorem one : 1 = 1 := rfl", filename: "One.lean" }),
+  }, { OPENAI_API_KEY: "not-a-real-key", EXPERT_MODE_ENABLED: "false" });
+
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), {
+    error: "Expert translation is disabled on this public deployment.",
+    code: "EXPERT_MODE_DISABLED",
   });
 });
 

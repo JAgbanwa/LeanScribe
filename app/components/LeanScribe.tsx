@@ -31,7 +31,7 @@ function download(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function LeanScribe() {
+export function LeanScribe({ expertEnabled = false }: { expertEnabled?: boolean }) {
   const [source, setSource] = useState(DEFAULT_SOURCE);
   const [filename, setFilename] = useState("Arithmetic.lean");
   const [previewMode, setPreviewMode] = useState<PreviewMode>("document");
@@ -66,7 +66,7 @@ export function LeanScribe() {
     nextSource = source,
     nextFilename = filename,
   ) => {
-    if (!nextSource.trim()) return;
+    if (!expertEnabled || !nextSource.trim()) return;
     const requestId = expertRequest.current + 1;
     expertRequest.current = requestId;
     setExpertState("loading");
@@ -110,7 +110,7 @@ export function LeanScribe() {
     const text = await file.text();
     setFilename(file.name);
     updateSource(text);
-    void runExpertTranslation(text, file.name);
+    if (expertEnabled) void runExpertTranslation(text, file.name);
   };
 
   const onFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -134,7 +134,7 @@ export function LeanScribe() {
       pasted +
       source.slice(editor.selectionEnd);
     updateSource(nextSource);
-    void runExpertTranslation(nextSource, filename);
+    if (expertEnabled) void runExpertTranslation(nextSource, filename);
   };
 
   const downloadTex = () => {
@@ -169,7 +169,9 @@ export function LeanScribe() {
         </a>
         <div className="privacy-note">
           <span className="privacy-dot" aria-hidden="true" />
-          Local fallback · expert analysis on paste
+          {expertEnabled
+            ? "Local fallback · expert analysis available"
+            : "Public local mode · source stays in your browser"}
         </div>
         <a
           className="github-link"
@@ -185,9 +187,9 @@ export function LeanScribe() {
         <p className="eyebrow"><span>Lean</span><i /> <span>Plain English</span><i /> <span>PDF · TeX · CSV</span></p>
         <h1 id="page-title">From formal proof<br />to finished page.</h1>
         <p className="hero-copy">
-          Paste or drop in a <code>.lean</code> file. LeanScribe reads the whole
-          proof and preserves every theorem, lemma, and corollary as precise
-          mathematical prose, then builds PDF, TeX, and CSV documentation.
+          Paste or drop in a <code>.lean</code> file. LeanScribe preserves every
+          theorem, lemma, and explicit corollary as natural-language prose,
+          then builds PDF, TeX, and CSV documentation directly in your browser.
         </p>
       </section>
 
@@ -237,34 +239,54 @@ export function LeanScribe() {
           {dragging && <div className="drop-overlay">Drop your .lean file</div>}
         </div>
 
-        <div className={`expert-panel state-${expertState}`} aria-live="polite">
-          <div className="expert-copy">
-            <span className="expert-badge"><i aria-hidden="true">✦</i> GPT-5.6 SOL · HIGH REASONING</span>
-            <h3>Proof-aware semantic translation</h3>
-            <p>
-              Reads imports, binders, definitions, dependencies, and visible proof tactics
-              together—then writes precise mathematical prose instead of replacing symbols.
-            </p>
-            <small>
-              Expert mode sends the pasted source to OpenAI for analysis. The instant local
-              translation remains available without it.
-            </small>
+        {expertEnabled ? (
+          <div className={`expert-panel state-${expertState}`} aria-live="polite">
+            <div className="expert-copy">
+              <span className="expert-badge"><i aria-hidden="true">✦</i> GPT-5.6 SOL · HIGH REASONING</span>
+              <h3>Proof-aware semantic translation</h3>
+              <p>
+                Reads imports, binders, definitions, dependencies, and visible proof tactics
+                together—then writes precise mathematical prose instead of replacing symbols.
+              </p>
+              <small>
+                Expert mode sends the pasted source to OpenAI for analysis. The instant local
+                translation remains available without it.
+              </small>
+            </div>
+            <div className="expert-action">
+              <button
+                type="button"
+                onClick={() => void runExpertTranslation()}
+                disabled={!source.trim() || expertState === "loading"}
+              >
+                {expertState === "loading"
+                  ? "Interpreting proof…"
+                  : expertState === "ready"
+                    ? "Re-run expert translation"
+                    : "Generate expert translation"}
+              </button>
+              <span>{expertMessage || "Pasting or opening a file starts expert mode automatically."}</span>
+            </div>
           </div>
-          <div className="expert-action">
-            <button
-              type="button"
-              onClick={() => void runExpertTranslation()}
-              disabled={!source.trim() || expertState === "loading"}
-            >
-              {expertState === "loading"
-                ? "Interpreting proof…"
-                : expertState === "ready"
-                  ? "Re-run expert translation"
-                  : "Generate expert translation"}
-            </button>
-            <span>{expertMessage || "Pasting or opening a file starts expert mode automatically."}</span>
+        ) : (
+          <div className="expert-panel state-idle" aria-live="polite">
+            <div className="expert-copy">
+              <span className="expert-badge"><i aria-hidden="true">✓</i> PUBLIC · LOCAL-ONLY</span>
+              <h3>Private conversion in your browser</h3>
+              <p>
+                Your Lean source is parsed and converted on your device. Nothing is uploaded
+                to an AI provider, and PDF, TeX, and CSV downloads remain available.
+              </p>
+              <small>
+                Expert AI translation is disabled on the public deployment to prevent anonymous
+                use of a private API key.
+              </small>
+            </div>
+            <div className="expert-action">
+              <span>Paste, drop, or open a Lean file to convert it instantly.</span>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="conversion-rail" aria-hidden="true">
           <span />
@@ -425,11 +447,11 @@ export function LeanScribe() {
 
       <section className="how-it-works" aria-labelledby="how-title">
         <div>
-          <span className="step-label">WHOLE-FILE REASONING</span>
-          <h2 id="how-title">Reverse formalization, with context.</h2>
+          <span className="step-label">{expertEnabled ? "WHOLE-FILE REASONING" : "LOCAL-FIRST CONVERSION"}</span>
+          <h2 id="how-title">Reverse formalization, safely.</h2>
         </div>
         <ol>
-          <li><span>1</span><div><b>Read globally</b><p>Imports, notation, declarations, and dependencies are considered together.</p></div></li>
+          <li><span>1</span><div><b>Read the source</b><p>Imports, notation, and supported declarations are identified in the Lean file.</p></div></li>
           <li><span>2</span><div><b>Preserve declaration types</b><p>Theorems become natural-language theorems, lemmas remain lemmas, and explicit corollaries remain corollaries.</p></div></li>
           <li><span>3</span><div><b>Publish consistently</b><p>The same semantic document drives PDF, editable TeX, and structured CSV.</p></div></li>
         </ol>

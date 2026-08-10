@@ -2,7 +2,7 @@
 
 LeanScribe reverse-formalizes Lean 4 source into rigorous natural-language documentation, polished LaTeX, readable PDF, and structured CSV. Its expert mode reads a complete `.lean` file as one mathematical artifact: imports, namespaces, binders, dependencies, theorem statements, and visible proof strategy are interpreted together.
 
-An instant, rule-based converter remains available in the browser. Pasting, dropping, or opening a file also starts the optional AI-backed semantic reading when the server is configured.
+An instant, rule-based converter is available in the browser. On the public deployment, conversion and file generation stay on the visitor's device and expert AI mode is disabled so anonymous traffic cannot spend a private API key. Self-hosted or private deployments can explicitly enable the optional AI-backed semantic reading.
 
 Try the current deployment at [leanscribe.agbanwajamal03.chatgpt.site](https://leanscribe.agbanwajamal03.chatgpt.site/).
 
@@ -71,10 +71,11 @@ To enable expert semantic translation, copy the environment template and add an 
 ```bash
 cp .env.example .env.local
 # Set OPENAI_API_KEY in .env.local
+# Keep EXPERT_MODE_ENABLED=true for a private or controlled deployment
 npm run dev
 ```
 
-`OPENAI_MODEL` defaults to `gpt-5.6-sol`. Never commit `.env.local` or an API key.
+`OPENAI_MODEL` defaults to `gpt-5.6-sol`. Expert mode runs only when both `EXPERT_MODE_ENABLED=true` and `OPENAI_API_KEY` are present. Never commit `.env.local` or an API key.
 
 ## Commands
 
@@ -116,7 +117,9 @@ Local conversion and all file generation happen in the browser. Expert mode send
 
 ## Deployment
 
-Configure `OPENAI_API_KEY` as a server-side secret and optionally set `OPENAI_MODEL`. The key must never be exposed through a `NEXT_PUBLIC_` variable or embedded in browser JavaScript. Without a key, the app continues to provide its local conversion and the expert endpoint returns a safe `503 AI_NOT_CONFIGURED` response.
+The public LeanScribe deployment intentionally has no `OPENAI_API_KEY` and sets `EXPERT_MODE_ENABLED=false`. Anyone can use local conversion and all three downloads without an account, while Lean source stays in the browser.
+
+For a private or otherwise controlled deployment, configure `OPENAI_API_KEY` as a server-side secret, set `EXPERT_MODE_ENABLED=true`, and optionally set `OPENAI_MODEL`. The key must never be exposed through a `NEXT_PUBLIC_` variable or embedded in browser JavaScript. Without both the enable flag and key, expert requests return a safe `503` response and local conversion remains available.
 
 The production deployment uses a server-side secret; users should never paste an API key into the LeanScribe source editor or commit one to this repository.
 
