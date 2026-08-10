@@ -8,6 +8,10 @@ The public beta is available at [leanscribe.agbanwajamal03.chatgpt.site](https:/
 
 ## What is implemented now
 
+> **Repository status:** The trusted semantic publishing release is deployed and implemented in [draft PR #2](https://github.com/JAgbanwa/LeanScribe/pull/2) at commit [`2422d0d`](https://github.com/JAgbanwa/LeanScribe/commit/2422d0d3154f3ddb4a5104ebd973964242042241). This README records that progress while the implementation awaits merge into `main`.
+
+## What is implemented now
+
 This release is the first slice of the **Trusted statement renderer** milestone.
 
 - A Lean-native extractor loads an already-built module from its real project environment.
@@ -49,6 +53,7 @@ Build LeanScribe’s extractor:
 ```bash
 git clone https://github.com/JAgbanwa/LeanScribe.git
 cd LeanScribe
+git switch codex/semantic-reverse-translation # until PR #2 is merged
 lake build leanscribe_extract
 ```
 
@@ -128,11 +133,39 @@ Elaborating an uploaded Lean project is running untrusted code: Lean elaborators
 
 Before those features ship, each job must run as an ephemeral nonprivileged workload with no network or host secrets, read-only inputs, controlled caches, strict resource/process limits, archive/path protections, audited Lean and TeX toolchains, TeX shell escape disabled, sanitized output, rate limits, and retention controls. See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md).
 
+```
+
+The public deployment is local-only and has no OpenAI API key. If a controlled self-hosted deployment enables optional polishing, it must set both `EXPERT_MODE_ENABLED=true` and `OPENAI_API_KEY`. The API rejects raw Lean source and accepts only a validated elaborated semantic bundle; requests use `store: false`.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A["Built Lean project"] --> B["Lean-native extractor"]
+    B --> C["leanscribe.semantic-ir.v1"]
+    C --> D["Deterministic literal renderer"]
+    C --> E["Optional constrained prose renderer"]
+    D --> F["Coverage and trust checks"]
+    E --> F
+    F --> G["HTML · Markdown · TeX · PDF · CSV · JSON"]
+```
+
+Lean’s processing pipeline and `InfoTree` APIs are the intended foundation for richer source-to-semantic correspondence. See the [Lean elaboration reference](https://lean-lang.org/doc/reference/latest/Elaboration-and-Compilation/) and [InfoTree API](https://lean-lang.org/doc/api/Lean/Elab/InfoTree/Types.html). The current extractor starts from the compiled environment and declaration ranges; expression-level InfoTree spans are next.
+
+LeanScribe should complement whole-library documentation tools such as [doc-gen4](https://github.com/leanprover/doc-gen4), not recreate their project build and browsing infrastructure.
+
+## Security boundary
+
+Elaborating an uploaded Lean project is running untrusted code: Lean elaborators can perform IO. The public beta therefore does **not** accept server-side project uploads or GitHub repositories and does not claim sandboxed remote elaboration.
+
+Before those features ship, each job must run as an ephemeral nonprivileged workload with no network or host secrets, read-only inputs, controlled caches, strict resource/process limits, archive/path protections, audited Lean and TeX toolchains, TeX shell escape disabled, sanitized output, rate limits, and retention controls. See [docs/THREAT_MODEL.md](https://github.com/JAgbanwa/LeanScribe/blob/codex/semantic-reverse-translation/docs/THREAT_MODEL.md).
+
 For formal trust, LeanScribe reports transitive axioms and incomplete proofs rather than hiding them. The relevant Lean references are [Axioms](https://lean-lang.org/doc/reference/latest/Axioms/) and [Validating Lean Proofs](https://lean-lang.org/doc/reference/latest/ValidatingProofs/).
 
 ## Roadmap and evaluation
 
 The detailed, acceptance-test-driven roadmap is in [docs/ROADMAP.md](docs/ROADMAP.md). The evaluation protocol is in [docs/EVALUATION.md](docs/EVALUATION.md).
+The detailed, acceptance-test-driven roadmap is in [docs/ROADMAP.md](https://github.com/JAgbanwa/LeanScribe/blob/codex/semantic-reverse-translation/docs/ROADMAP.md). The evaluation protocol is in [docs/EVALUATION.md](https://github.com/JAgbanwa/LeanScribe/blob/codex/semantic-reverse-translation/docs/EVALUATION.md).
 
 The next milestone is not general proof narration. It is making statement fidelity exceptional: richer InfoTree alignment, source hashes and repository commits, author-preserved editorial kinds, configuration/terminology locks, project outline and batch conversion, accessible MathML, and a 200–500 declaration expert-reviewed Lean 4/mathlib benchmark.
 
