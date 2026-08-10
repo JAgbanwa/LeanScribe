@@ -27,7 +27,9 @@ test("server-renders the LeanScribe converter", async () => {
   assert.match(html, /Proof-aware semantic translation/);
   assert.match(html, /GPT-5\.6 SOL/);
   assert.match(html, /Generate expert translation/);
-  assert.match(html, /For every natural number n, n plus 0 equals n\./);
+  assert.match(html, /Natural-language(?:\s|<!--.*?-->)*Theorem/);
+  assert.match(html, /Natural-language(?:\s|<!--.*?-->)*Lemma/);
+  assert.match(html, /This theorem states: For every natural number n, n plus 0 equals n\./);
   assert.match(html, /Download \.tex/);
   assert.match(html, /Download \.pdf/);
   assert.match(html, /Download \.csv/);

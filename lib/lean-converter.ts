@@ -3,6 +3,7 @@ import type { SemanticTranslation } from "./semantic-schema";
 export type DeclarationKind =
   | "theorem"
   | "lemma"
+  | "corollary"
   | "example"
   | "definition"
   | "axiom"
@@ -62,6 +63,7 @@ export const DEFAULT_SOURCE = SAMPLE_SOURCE;
 const kindMap: Record<string, DeclarationKind> = {
   theorem: "theorem",
   lemma: "lemma",
+  corollary: "corollary",
   example: "example",
   def: "definition",
   abbrev: "definition",
@@ -315,6 +317,9 @@ function describeDeclaration(
   if (kind === "structure" || kind === "inductive") {
     return `The ${kind} type “${humanizeIdentifier(name)}” is described as follows: ${sentence}`;
   }
+  if (kind === "theorem" || kind === "lemma" || kind === "corollary") {
+    return `This ${kind} states: ${sentence}`;
+  }
   return sentence;
 }
 
@@ -326,6 +331,7 @@ function buildCsv(title: string, declarations: LeanDeclaration[]): string {
   const header = [
     "document",
     "kind",
+    "natural_language_kind",
     "name",
     "line",
     "natural_language",
@@ -338,6 +344,7 @@ function buildCsv(title: string, declarations: LeanDeclaration[]): string {
   ];
   const rows = declarations.map((declaration) => [
     title,
+    declaration.kind,
     declaration.kind,
     declaration.name,
     declaration.line,
@@ -395,7 +402,7 @@ export function convertLean(source: string, filename = "Main.lean"): ConversionR
     }
 
     const match = line.match(
-      /^\s*(theorem|lemma|example|def|abbrev|axiom|structure|inductive|class|instance)\s*(?:([^\s(:]+)\s*)?(.*)$/,
+      /^\s*(theorem|lemma|corollary|example|def|abbrev|axiom|structure|inductive|class|instance)\s*(?:([^\s(:]+)\s*)?(.*)$/,
     );
     if (!match) return;
 
@@ -454,7 +461,10 @@ export function mergeSemanticTranslation(
     const localDeclaration = fallbackIndex >= 0 ? unusedLocal.splice(fallbackIndex, 1)[0] : undefined;
 
     return {
-      kind: declaration.kind,
+      // The parser reads the source keyword directly, so it is the authority for
+      // declaration type. Expert prose may enrich a declaration, but must not
+      // silently turn a theorem into a lemma (or vice versa).
+      kind: localDeclaration?.kind ?? declaration.kind,
       name: declaration.name || localDeclaration?.name || `declaration_${index + 1}`,
       leanType: declaration.sourceSignature || localDeclaration?.leanType || "(signature unavailable)",
       latex: declaration.mathematicalStatementLatex || localDeclaration?.latex || "",
@@ -518,7 +528,7 @@ function buildTex(
           const caveats = declaration.caveats?.length
             ? `\n\n\\paragraph{Caveats.} ${escapeTexText(declaration.caveats.join(" "))}`
             : "";
-          return `\\subsection*{${capitalize(declaration.kind)}: \\texttt{${escapeTexText(declaration.name)}}}${note}
+          return `\\subsection*{Natural-language ${capitalize(declaration.kind)}: \\texttt{${escapeTexText(declaration.name)}}}${note}
 \\noindent ${escapeTexText(declaration.naturalLanguage)}${strategy}${dependencies}${caveats}
 
 \\[
@@ -612,7 +622,7 @@ export function buildPdf(result: ConversionResult): Blob {
   }
   if (result.imports.length) lines.push(`Imports: ${result.imports.join(", ")}`, "");
   result.declarations.forEach((declaration, index) => {
-    lines.push(`${index + 1}. ${capitalize(declaration.kind)}: ${declaration.name}`);
+    lines.push(`${index + 1}. Natural-language ${capitalize(declaration.kind)}: ${declaration.name}`);
     wrapText(declaration.naturalLanguage).forEach((line) => lines.push(`   ${line}`));
     if (declaration.proofStrategy) {
       wrapText(`Proof strategy: ${declaration.proofStrategy}`, 80).forEach((line) =>

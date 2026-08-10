@@ -186,8 +186,8 @@ export function LeanScribe() {
         <h1 id="page-title">From formal proof<br />to finished page.</h1>
         <p className="hero-copy">
           Paste or drop in a <code>.lean</code> file. LeanScribe reads the whole
-          proof, explains its mathematics and strategy, then builds PDF, TeX,
-          and CSV documentation.
+          proof and preserves every theorem, lemma, and corollary as precise
+          mathematical prose, then builds PDF, TeX, and CSV documentation.
         </p>
       </section>
 
@@ -330,7 +330,7 @@ export function LeanScribe() {
                 <section className="declaration" key={`${declaration.name}-${declaration.line}`}>
                   <div className="declaration-meta">
                     <span>{String(index + 1).padStart(2, "0")}</span>
-                    <b>{capitalize(declaration.kind)}</b>
+                    <b>Natural-language {capitalize(declaration.kind)}</b>
                     {declaration.line > 0 && <em>line {declaration.line}</em>}
                     {declaration.confidence && (
                       <strong className={`confidence ${declaration.confidence}`}>
@@ -365,7 +365,7 @@ export function LeanScribe() {
               )) : (
                 <div className="empty-output">
                   <b>No declarations yet</b>
-                  <span>Add a theorem, lemma, example, definition, axiom, structure, or inductive type.</span>
+                  <span>Add a theorem, lemma, corollary, example, definition, axiom, structure, or inductive type.</span>
                 </div>
               )}
               {result.glossary.length > 0 && (
@@ -430,7 +430,7 @@ export function LeanScribe() {
         </div>
         <ol>
           <li><span>1</span><div><b>Read globally</b><p>Imports, notation, declarations, and dependencies are considered together.</p></div></li>
-          <li><span>2</span><div><b>Interpret rigorously</b><p>Statements, assumptions, and visible proof strategies become precise prose.</p></div></li>
+          <li><span>2</span><div><b>Preserve declaration types</b><p>Theorems become natural-language theorems, lemmas remain lemmas, and explicit corollaries remain corollaries.</p></div></li>
           <li><span>3</span><div><b>Publish consistently</b><p>The same semantic document drives PDF, editable TeX, and structured CSV.</p></div></li>
         </ol>
       </section>

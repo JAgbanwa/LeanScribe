@@ -2,6 +2,7 @@ export type SemanticDeclaration = {
   kind:
     | "theorem"
     | "lemma"
+    | "corollary"
     | "example"
     | "definition"
     | "axiom"
@@ -66,6 +67,7 @@ export const SEMANTIC_TRANSLATION_SCHEMA = {
             enum: [
               "theorem",
               "lemma",
+              "corollary",
               "example",
               "definition",
               "axiom",
@@ -115,6 +117,8 @@ Analyze the file globally, not line by line. Use imports, namespaces, variables,
 - domain-specific Lean or Mathlib terms in a glossary.
 
 Natural-language statements must be mathematically precise, fluent, self-contained, and intelligible to a mathematician who does not read Lean. Preserve distinctions such as implication versus equivalence, explicit versus implicit assumptions, existence versus construction, and definitional equality versus propositional equality.
+
+Preserve each source declaration's category exactly. A theorem must remain a theorem, a lemma must remain a lemma, and an explicitly declared corollary must remain a corollary. Do not relabel a declaration based on how important or derivative its statement seems. Lean projects commonly express corollaries with the theorem or lemma command; in that case preserve the command actually written and use "corollary" only when the source explicitly declares one. The naturalLanguage field should contain the declaration's mathematical statement in prose, while proofStrategy should separately describe the visible proof.
 
 For mathematicalStatementLatex, return a valid standalone LaTeX math fragment without dollar signs or display delimiters. For sourceSignature, copy the declaration signature faithfully and omit its proof body. For proofStrategy, summarize the visible argument without exposing hidden chain-of-thought. If the source does not justify an interpretation, state the ambiguity in caveats and lower confidence.
 

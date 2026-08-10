@@ -7,7 +7,8 @@ An instant, rule-based converter remains available in the browser. Pasting, drop
 ## Features
 
 - Paste, drag-and-drop, or open any UTF-8 `.lean` file
-- Detect theorems, lemmas, examples, definitions, axioms, structures, classes, instances, and inductive types
+- Detect theorems, lemmas, explicit corollaries, examples, definitions, axioms, structures, classes, instances, and inductive types
+- Preserve declaration types deterministically: a Lean theorem becomes a natural-language theorem, a lemma remains a lemma, and an explicit corollary remains a corollary in the preview, PDF, TeX, and CSV
 - Interpret the file globally instead of translating one symbol or line at a time
 - Produce an overview, prerequisites, per-declaration mathematical statements, proof strategies, dependencies, confidence levels, caveats, and a glossary
 - Translate common Lean and Unicode symbols into conventional LaTeX notation
@@ -50,7 +51,9 @@ npm run lint    # Run ESLint
 
 ## How conversion works
 
-The local engine scans top-level declarations and translates common Lean syntax immediately. When expert mode is configured, `/api/translate` sends the complete source to the OpenAI Responses API with a strict semantic-document schema. The model is instructed to preserve quantifiers and assumptions, distinguish statements from proof methods, track dependencies, flag ambiguity, and treat Lean comments as source data rather than instructions. The structured result is merged with locally extracted signatures, then one shared document model drives the browser preview and all three exports.
+The local engine scans top-level declarations and translates common Lean syntax immediately. When expert mode is configured, `/api/translate` sends the complete source to the OpenAI Responses API with a strict semantic-document schema. The model is instructed to preserve quantifiers, assumptions, and declaration categories; distinguish statements from proof methods; track dependencies; flag ambiguity; and treat Lean comments as source data rather than instructions. The structured result is merged with locally extracted signatures. The source keyword remains authoritative for each declaration's type, so expert mode cannot silently relabel a theorem as a lemma. One shared document model then drives the browser preview and all three exports.
+
+Lean 4's standard declaration commands are `theorem` and `example`, while Mathlib also commonly uses `lemma`. Some projects add an explicit `corollary` command through custom syntax; LeanScribe recognizes it. When a mathematical corollary is written with `theorem` or `lemma`, LeanScribe preserves the command actually present in the source rather than guessing a different category.
 
 This is the reverse direction of a formalization assistant: formal Lean becomes human-facing mathematical exposition. LeanScribe is independent of and is not affiliated with Aristotle or Harmonic.
 
@@ -70,6 +73,7 @@ lib/
   semantic-schema.ts         Strict expert-output schema and translation instructions
 tests/
   rendered-html.test.mjs     Production-render smoke tests
+  lean-converter.test.ts     Declaration parsing and type-preservation tests
 ```
 
 ## Privacy
