@@ -3,6 +3,8 @@ import type {
   DeclarationKind,
   LeanDeclaration,
 } from "./lean-converter";
+import { planProse, renderProse, type PlannedProse, type ProseSpan } from "./prose-engine.ts";
+import { proseFingerprint, sourceFingerprint as hashSource } from "./provenance.ts";
 
 export type ExtractionStatus = "elaborated" | "unelaborated" | "incomplete";
 export type ProseTrustLevel = "literal" | "polished" | "explanatory";
@@ -68,17 +70,39 @@ export type CoverageEntry = {
   semanticRole: "binder" | "hypothesis" | "instance" | "conclusion";
   label: string;
   formalText: string;
+  /** the prose that expresses this component; may be one clause among several */
   proseText: string;
   status: CoverageStatus;
+  /**
+   * Why it is legitimate for this component not to appear in the prose. Present only
+   * for `suppressed`. A component with no spans AND no justification is `unmapped`,
+   * which is a hard failure — that distinction is the point of the ledger.
+   */
+  justification?: string;
+  /** the component that determines a suppressed one, when there is one */
+  determinedBy?: string | null;
 };
 
 export type DeclarationTrace = {
   declarationId: string;
   entries: CoverageEntry[];
   covered: number;
+  suppressed: number;
+  unmapped: number;
   total: number;
   complete: boolean;
   highestTrustEligible: boolean;
+  /**
+   * The published prose as a span stream. Each span carries the ids it expresses, which
+   * is what lets one idiomatic clause account for several formal components without the
+   * ledger degrading to a one-clause-per-binder transliteration.
+   */
+  spans: ProseSpan[];
+  /** a string-level fallback fired; no structural claim may be made */
+  approximate: boolean;
+  /** lexicon gaps encountered, as a work queue rather than a silent degradation */
+  lexiconGaps: string[];
+  proseHash: string;
 };
 
 export type TrustRecord = {
@@ -166,55 +190,164 @@ function splitBinders(signature: string, declarationId: string): {
   return { binders, conclusion: rest.replace(/^:\s*/, "").trim() || signature };
 }
 
-function literalBinderProse(binder: SemanticBinder): string {
-  if (binder.role === "type-class-assumption") {
-    return `with the instance assumption ${binder.typeText}`;
-  }
-  if (binder.role === "hypothesis") {
-    return `assuming ${binder.name} : ${binder.typeText}`;
-  }
-  const visibility = binder.binderKind === "explicit" ? "" : `${binder.binderKind} `;
-  return `for every ${visibility}${binder.name} : ${binder.typeText}`;
-}
-
-function coverageFor(
+/**
+ * Semantic coverage over the emitted span stream.
+ *
+ * The old implementation mapped one binder to one hand-built clause, which made coverage
+ * trivially verifiable and the prose unreadable. The planner instead emits spans that
+ * already carry the ids they express, so `"compact nonempty subset of "` is a single span
+ * accounting for three components. Coverage is the inversion of that map.
+ *
+ * Three terminal states, and the difference between the last two is the whole point:
+ *   covered    — at least one span expresses it
+ *   suppressed — deliberately not surfaced, with a written justification
+ *   unmapped   — nothing expressed it and nothing justified its absence: hard failure
+ */
+function coverageFromPlan(
   declarationId: string,
   binders: SemanticBinder[],
   conclusion: string,
+  planned: PlannedProse,
   extractionStatus: ExtractionStatus,
 ): DeclarationTrace {
-  const status: CoverageStatus = extractionStatus === "elaborated" ? "covered" : "provisional";
-  const entries: CoverageEntry[] = binders.map((binder) => ({
-    id: binder.id,
-    semanticRole:
-      binder.role === "hypothesis"
-        ? "hypothesis"
-        : binder.role === "type-class-assumption"
-          ? "instance"
-          : "binder",
-    label: binder.name,
-    formalText: `${binder.name} : ${binder.typeText}`,
-    proseText: literalBinderProse(binder),
-    status,
-  }));
-  entries.push({
-    id: `${declarationId}:conclusion`,
-    semanticRole: "conclusion",
-    label: "Conclusion",
-    formalText: conclusion,
-    proseText: `it follows that ${conclusion}`,
-    status,
+  const conclusionId = `${declarationId}:conclusion`;
+  const spans = planned.sentences.flatMap((sentence) => sentence.spans);
+
+  // Index by position, not just by span: a component is usually expressed by several
+  // non-adjacent spans ("n" ... "natural number"), and concatenating only the matching
+  // ones yields "nnatural number". Showing the slice between the first and last match
+  // reproduces the clause a reader actually sees.
+  const expressedAt = new Map<string, number[]>();
+  spans.forEach((span, index) => {
+    for (const ref of span.refs) {
+      if (!expressedAt.has(ref)) expressedAt.set(ref, []);
+      expressedAt.get(ref)!.push(index);
+    }
+  });
+  const sliceFor = (id: string): string => {
+    const positions = expressedAt.get(id);
+    if (!positions || positions.length === 0) return "";
+    return spans
+      .slice(positions[0], positions[positions.length - 1] + 1)
+      .map((span) => span.text)
+      .join("")
+      .trim();
+  };
+  const absorbed = new Map(planned.absorbed.map((item) => [item.id, item]));
+
+  const components: Array<{ id: string; role: CoverageEntry["semanticRole"]; label: string; formal: string }> = [
+    ...binders.map((binder) => ({
+      id: binder.id,
+      role:
+        binder.role === "hypothesis"
+          ? ("hypothesis" as const)
+          : binder.role === "type-class-assumption"
+            ? ("instance" as const)
+            : ("binder" as const),
+      label: binder.name,
+      formal: `${binder.name} : ${binder.typeText}`,
+    })),
+    { id: conclusionId, role: "conclusion" as const, label: "Conclusion", formal: conclusion },
+  ];
+
+  const entries: CoverageEntry[] = components.map((component) => {
+    const matched = expressedAt.get(component.id) ?? [];
+    const suppression = absorbed.get(component.id);
+
+    // An unelaborated source scan cannot support a structural claim about anything, so
+    // every entry stays provisional regardless of how well the prose reads.
+    if (extractionStatus !== "elaborated") {
+      return {
+        id: component.id,
+        semanticRole: component.role,
+        label: component.label,
+        formalText: component.formal,
+        proseText: sliceFor(component.id) || "not elaborated",
+        status: "provisional" as CoverageStatus,
+      };
+    }
+
+    if (matched.length > 0) {
+      return {
+        id: component.id,
+        semanticRole: component.role,
+        label: component.label,
+        formalText: component.formal,
+        proseText: sliceFor(component.id),
+        status: "covered" as CoverageStatus,
+      };
+    }
+    if (suppression) {
+      return {
+        id: component.id,
+        semanticRole: component.role,
+        label: component.label,
+        formalText: component.formal,
+        proseText: "",
+        status: "suppressed" as CoverageStatus,
+        justification: suppression.why,
+        determinedBy: suppression.by,
+      };
+    }
+    return {
+      id: component.id,
+      semanticRole: component.role,
+      label: component.label,
+      formalText: component.formal,
+      proseText: "",
+      status: "unmapped" as CoverageStatus,
+    };
   });
 
-  const covered = entries.filter((entry) => entry.status === "covered").length;
-  const complete = entries.length > 0 && covered === entries.length;
+  const count = (status: CoverageStatus) => entries.filter((entry) => entry.status === status).length;
+  const covered = count("covered");
+  const suppressed = count("suppressed");
+  const unmapped = count("unmapped");
+  const complete = entries.length > 0 && unmapped === 0 && count("provisional") === 0;
+
   return {
     declarationId,
     entries,
     covered,
+    suppressed,
+    unmapped,
     total: entries.length,
     complete,
-    highestTrustEligible: extractionStatus === "elaborated" && complete,
+    // An unrecognised typeclass or namespace means we do not know what the statement
+    // asserts, so `approximate` blocks the top badge just as an unmapped component does.
+    highestTrustEligible: extractionStatus === "elaborated" && complete && !planned.approximate,
+    spans,
+    approximate: planned.approximate,
+    lexiconGaps: [...new Set(planned.misses.map((miss) => `${miss.kind} ${miss.symbol}`))],
+    proseHash: proseFingerprint(spans),
+  };
+}
+
+/** Plan all three registers once; the ledger is computed against the published one. */
+function proseBundle(
+  declarationId: string,
+  binders: SemanticBinder[],
+  conclusion: string,
+  extractionStatus: ExtractionStatus,
+): {
+  literal: string;
+  polished: string;
+  explanatory: string;
+  trace: DeclarationTrace;
+} {
+  const conclusionId = `${declarationId}:conclusion`;
+  const literal = planProse(binders, conclusion, conclusionId, "literal");
+  const polished = planProse(binders, conclusion, conclusionId, "polished");
+  const explanatory = planProse(binders, conclusion, conclusionId, "explanatory");
+
+  // Coverage is checked against `polished`, not `literal`. The literal register restates
+  // every binder and would satisfy any ledger; the polished register is the one that
+  // merges, folds and suppresses, so it is the one worth checking.
+  return {
+    literal: renderProse(literal, "plain"),
+    polished: renderProse(polished, "plain"),
+    explanatory: renderProse(explanatory, "plain"),
+    trace: coverageFromPlan(declarationId, binders, conclusion, polished, extractionStatus),
   };
 }
 
@@ -233,7 +366,11 @@ function provisionalTrust(sourceHash: string): TrustRecord {
   };
 }
 
-function elaboratedTrust(bundle: SemanticIRBundle, declaration: ExtractedDeclaration): TrustRecord {
+function elaboratedTrust(
+  bundle: SemanticIRBundle,
+  declaration: ExtractedDeclaration,
+  trace: DeclarationTrace,
+): TrustRecord {
   return {
     extractionStatus: bundle.extractionStatus,
     leanVersion: bundle.leanVersion,
@@ -242,29 +379,33 @@ function elaboratedTrust(bundle: SemanticIRBundle, declaration: ExtractedDeclara
     axioms: declaration.axioms,
     usesSorry: declaration.usesSorry,
     usesNativeEvaluation: declaration.usesNativeEvaluation,
-    proseCorrespondence: "structurally-checked",
+    proseCorrespondence: trace.highestTrustEligible
+      ? "structurally-checked"
+      : trace.unmapped > 0
+        ? "unmapped"
+        : "provisional",
     humanReviewed: false,
-    statement:
-      "Generated from a kernel-accepted formal statement; prose correspondence has passed LeanScribe’s structural checks.",
+    statement: trace.highestTrustEligible
+      ? "Generated from a kernel-accepted formal statement; prose correspondence has passed LeanScribe’s structural checks — every formal component is expressed by a prose span or suppressed with a recorded justification."
+      : trace.unmapped > 0
+        ? `${trace.unmapped} formal component(s) are not expressed by any prose span; no correspondence claim is made.`
+        : "Rendering fell back to string-level rewriting, so the structural correspondence claim is withheld.",
   };
 }
 
-export function sourceFingerprint(source: string): string {
-  let hash = 0xcbf29ce484222325n;
-  const prime = 0x100000001b3n;
-  for (const byte of new TextEncoder().encode(source)) {
-    hash ^= BigInt(byte);
-    hash = BigInt.asUintN(64, hash * prime);
-  }
-  return `fnv1a64:${hash.toString(16).padStart(16, "0")}`;
-}
+/**
+ * Re-exported from ./provenance. The previous implementation was fnv1a64, a hash-table
+ * function: trivially collidable and meaningless as an integrity claim, which is not
+ * something to display inside a trust badge.
+ */
+export { sourceFingerprint } from "./provenance.ts";
 
 export function buildProvisionalPublication(
   result: ConversionResult,
   source: string,
   filename: string,
 ): PublishedDocument {
-  const hash = sourceFingerprint(source);
+  const hash = hashSource(source);
   return {
     schemaVersion: "leanscribe.publication.v1",
     title: result.title,
@@ -275,11 +416,8 @@ export function buildProvisionalPublication(
     declarations: result.declarations.map((declaration) => {
       const semanticId = `${filename}:${declaration.line}:${declaration.name}`;
       const { binders, conclusion } = splitBinders(declaration.leanType, semanticId);
-      const trace = coverageFor(semanticId, binders, conclusion, "unelaborated");
-      const literalProse = [
-        ...binders.map(literalBinderProse),
-        `the conclusion is ${conclusion}`,
-      ].join("; ");
+      const prose = proseBundle(semanticId, binders, conclusion, "unelaborated");
+      const trace = prose.trace;
       return {
         ...declaration,
         semanticId,
@@ -287,11 +425,9 @@ export function buildProvisionalPublication(
         conclusion,
         trace,
         trust: provisionalTrust(hash),
-        literalProse: `${literalProse.charAt(0).toUpperCase()}${literalProse.slice(1)}.`,
-        polishedProse: declaration.naturalLanguage,
-        explanatoryProse:
-          declaration.note ||
-          "Interpretive commentary is intentionally withheld in deterministic public mode.",
+        literalProse: prose.literal,
+        polishedProse: prose.polished,
+        explanatoryProse: prose.explanatory,
         provenance: {
           extractionStatus: "unelaborated",
           sourceHash: hash,
@@ -359,40 +495,47 @@ export function publicationFromSemanticIR(bundle: SemanticIRBundle): PublishedDo
       ...binder,
       role: binderRole(binder.name, binder.typeText, binder.binderKind),
     }));
-    const trace = coverageFor(declaration.id, binders, declaration.conclusion, "elaborated");
-    const literalProse = [
-      ...binders.map(literalBinderProse),
-      `the conclusion is ${declaration.conclusion}`,
-    ].join("; ");
+    const prose = proseBundle(declaration.id, binders, declaration.conclusion, "elaborated");
+    const trace = prose.trace;
     return {
       kind: (declaration.kind as DeclarationKind) || "other",
       name: declaration.name,
       leanType: declaration.typeText,
       latex: declaration.conclusion,
-      naturalLanguage: `${literalProse.charAt(0).toUpperCase()}${literalProse.slice(1)}.`,
+      naturalLanguage: prose.polished,
       line: declaration.sourceLocation?.startLine ?? index + 1,
       note: declaration.docString || undefined,
       dependencies: declaration.dependencies,
-      caveats: trace.complete ? [] : ["The semantic coverage ledger is incomplete."],
-      confidence: trace.complete ? "high" : "low",
+      caveats: [
+        ...(trace.unmapped > 0
+          ? [`${trace.unmapped} formal component(s) are not expressed by any prose span.`]
+          : []),
+        ...(trace.approximate
+          ? [
+              `Rendering used a string-level fallback${
+                trace.lexiconGaps.length ? ` (${trace.lexiconGaps.join(", ")})` : ""
+              }; no structural claim is made.`,
+            ]
+          : []),
+      ],
+      confidence: trace.highestTrustEligible ? "high" : trace.complete ? "medium" : "low",
       semanticId: declaration.id,
       binders,
       conclusion: declaration.conclusion,
       trace,
-      trust: elaboratedTrust(bundle, declaration),
-      literalProse: `${literalProse.charAt(0).toUpperCase()}${literalProse.slice(1)}.`,
-      polishedProse:
-        declaration.docString ||
-        "No author-reviewed polished statement is present in this semantic bundle.",
-      explanatoryProse: "Generated commentary is not part of the trusted statement layer.",
+      trust: elaboratedTrust(bundle, declaration, trace),
+      literalProse: prose.literal,
+      polishedProse: prose.polished,
+      explanatoryProse: declaration.docString
+        ? `${declaration.docString.trim()} ${prose.explanatory}`
+        : prose.explanatory,
       provenance: {
         extractionStatus: bundle.extractionStatus,
         sourceHash: bundle.sourceHash || "not supplied by extractor",
         coverage: `${trace.covered}/${trace.total} structurally checked`,
         proofStatus: declaration.proofStatus,
         axioms: declaration.axioms,
-        trustStatement:
-          "Generated from a kernel-accepted formal statement; prose correspondence has passed LeanScribe’s structural checks.",
+        trustStatement: elaboratedTrust(bundle, declaration, trace).statement,
       },
     };
   });
