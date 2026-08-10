@@ -12,6 +12,7 @@ export type LeanDeclaration = {
   name: string;
   leanType: string;
   latex: string;
+  naturalLanguage: string;
   line: number;
   note?: string;
 };
@@ -22,6 +23,7 @@ export type ConversionResult = {
   namespaces: string[];
   title: string;
   tex: string;
+  csv: string;
 };
 
 const SAMPLE_SOURCE = `import Mathlib
@@ -141,6 +143,182 @@ function escapeTexText(value: string): string {
     .replace(/\^/g, "\\textasciicircum{}");
 }
 
+function joinNaturalList(values: string[]): string {
+  if (values.length <= 1) return values[0] ?? "";
+  if (values.length === 2) return `${values[0]} and ${values[1]}`;
+  return `${values.slice(0, -1).join(", ")}, and ${values.at(-1)}`;
+}
+
+function humanizeIdentifier(value: string): string {
+  return value.replace(/_/g, " ").replace(/\./g, " ").replace(/\s+/g, " ").trim();
+}
+
+function naturalType(value: string, plural = false): string {
+  const normalized = value.trim();
+  const types: Record<string, [string, string]> = {
+    Nat: ["natural number", "natural numbers"],
+    "ℕ": ["natural number", "natural numbers"],
+    Int: ["integer", "integers"],
+    "ℤ": ["integer", "integers"],
+    Rat: ["rational number", "rational numbers"],
+    "ℚ": ["rational number", "rational numbers"],
+    Real: ["real number", "real numbers"],
+    "ℝ": ["real number", "real numbers"],
+    Complex: ["complex number", "complex numbers"],
+    "ℂ": ["complex number", "complex numbers"],
+    Bool: ["Boolean value", "Boolean values"],
+    Prop: ["proposition", "propositions"],
+    Type: ["type", "types"],
+    "Type*": ["type", "types"],
+  };
+  const known = types[normalized];
+  if (known) return known[plural ? 1 : 0];
+  return humanizeIdentifier(normalized);
+}
+
+function naturalExpression(value: string): string {
+  let output = value.trim()
+    .replace(/\bNat\.succ\s+([^\s,)]+)/g, "the successor of $1")
+    .replace(/\^\s*([\w.-]+)/g, " raised to the power of $1")
+    .replace(/↔|<->/g, " if and only if ")
+    .replace(/→|->/g, " implies ")
+    .replace(/←/g, " follows from ")
+    .replace(/∀/g, "for every ")
+    .replace(/∃/g, "there exists ")
+    .replace(/∧|\/\\/g, " and ")
+    .replace(/∨|\\\//g, " or ")
+    .replace(/¬/g, "not ")
+    .replace(/≤|<=/g, " is less than or equal to ")
+    .replace(/≥|>=/g, " is greater than or equal to ")
+    .replace(/≠|!=/g, " is not equal to ")
+    .replace(/∈/g, " belongs to ")
+    .replace(/∉/g, " does not belong to ")
+    .replace(/⊆/g, " is a subset of ")
+    .replace(/⊂/g, " is a proper subset of ")
+    .replace(/∪/g, " union ")
+    .replace(/∩/g, " intersection ")
+    .replace(/∅/g, "the empty set")
+    .replace(/∞/g, "infinity")
+    .replace(/\bTrue\b/g, "true")
+    .replace(/\bFalse\b/g, "false")
+    .replace(/\bNat\b|ℕ/g, "the natural numbers")
+    .replace(/\bInt\b|ℤ/g, "the integers")
+    .replace(/\bRat\b|ℚ/g, "the rational numbers")
+    .replace(/\bReal\b|ℝ/g, "the real numbers")
+    .replace(/\bComplex\b|ℂ/g, "the complex numbers")
+    .replace(/\s=\s/g, " equals ")
+    .replace(/\s\+\s/g, " plus ")
+    .replace(/\s-\s/g, " minus ")
+    .replace(/\s\*\s/g, " times ")
+    .replace(/\s\/\s/g, " divided by ")
+    .replace(/\bfun\b/g, "the function")
+    .replace(/\blambda\b|λ/g, "lambda")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.)])/g, "$1")
+    .trim();
+
+  output = humanizeIdentifier(output);
+  return output || "the declaration shown";
+}
+
+function splitLeadingBinders(signature: string): {
+  statement: string;
+  variables: string[];
+  assumptions: string[];
+} {
+  let rest = signature.trim();
+  const variables: string[] = [];
+  const assumptions: string[] = [];
+
+  while (rest.startsWith("(") || rest.startsWith("{")) {
+    const opener = rest[0];
+    const closer = opener === "(" ? ")" : "}";
+    let depth = 0;
+    let end = -1;
+    for (let index = 0; index < rest.length; index += 1) {
+      if (rest[index] === opener) depth += 1;
+      if (rest[index] === closer) depth -= 1;
+      if (depth === 0) {
+        end = index;
+        break;
+      }
+    }
+    if (end < 0) break;
+
+    const binder = rest.slice(1, end).trim();
+    rest = rest.slice(end + 1).trim();
+    const colon = binder.indexOf(":");
+    if (colon < 0) continue;
+
+    const rawNames = binder.slice(0, colon).trim().split(/\s+/).filter(Boolean);
+    const rawType = binder.slice(colon + 1).trim();
+    const looksLikeAssumption =
+      rawNames.every((name) => /^h\w*$/i.test(name)) ||
+      /[=<>≤≥≠↔→∧∨]|\bProp\b/.test(rawType);
+
+    if (looksLikeAssumption) {
+      assumptions.push(naturalExpression(rawType));
+    } else if (rawNames.length) {
+      const names = joinNaturalList(rawNames.map(humanizeIdentifier));
+      variables.push(`${naturalType(rawType, rawNames.length > 1)} ${names}`);
+    }
+  }
+
+  return {
+    statement: rest.replace(/^:\s*/, "").trim(),
+    variables,
+    assumptions,
+  };
+}
+
+function describeDeclaration(
+  kind: DeclarationKind,
+  name: string,
+  leanType: string,
+): string {
+  const { statement, variables, assumptions } = splitLeadingBinders(leanType);
+  const clauses: string[] = [];
+  if (variables.length) {
+    const quantifier = variables.some((variable) =>
+      /\b(numbers|integers|types|values|propositions)\b/.test(variable),
+    )
+      ? "for all"
+      : "for every";
+    clauses.push(`${quantifier} ${joinNaturalList(variables)}`);
+  }
+  if (assumptions.length) clauses.push(`assuming ${joinNaturalList(assumptions)}`);
+
+  const claim = naturalExpression(statement);
+  const core = clauses.length ? `${clauses.join(", ")}, ${claim}` : claim;
+  const sentence = core.charAt(0).toUpperCase() + core.slice(1).replace(/[.;:]?$/, ".");
+
+  if (kind === "definition") {
+    return `The definition “${humanizeIdentifier(name)}” is described as follows: ${sentence}`;
+  }
+  if (kind === "structure" || kind === "inductive") {
+    return `The ${kind} type “${humanizeIdentifier(name)}” is described as follows: ${sentence}`;
+  }
+  return sentence;
+}
+
+function csvCell(value: string | number): string {
+  return `"${String(value).replace(/"/g, '""')}"`;
+}
+
+function buildCsv(title: string, declarations: LeanDeclaration[]): string {
+  const header = ["document", "kind", "name", "line", "natural_language", "lean_signature", "latex"];
+  const rows = declarations.map((declaration) => [
+    title,
+    declaration.kind,
+    declaration.name,
+    declaration.line,
+    declaration.naturalLanguage,
+    declaration.leanType,
+    declaration.latex,
+  ]);
+  return [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
+}
+
 export function convertLean(source: string, filename = "Main.lean"): ConversionResult {
   const lines = source.replace(/\r\n/g, "\n").split("\n");
   const declarations: LeanDeclaration[] = [];
@@ -194,11 +372,17 @@ export function convertLean(source: string, filename = "Main.lean"): ConversionR
     const typePrefix = rawKind === "example" && match[2] ? `${match[2]} ${match[3]}` : match[3];
     const leanType = declarationType(typePrefix || "");
 
+    const declarationKind = kindMap[rawKind];
     declarations.push({
-      kind: kindMap[rawKind],
+      kind: declarationKind,
       name,
       leanType: leanType || "(declaration body)",
       latex: mapLeanSymbols(leanType || "declaration body"),
+      naturalLanguage: describeDeclaration(
+        declarationKind,
+        name,
+        leanType || "declaration body",
+      ),
       line: index + 1,
       note: pendingNote || undefined,
     });
@@ -212,6 +396,7 @@ export function convertLean(source: string, filename = "Main.lean"): ConversionR
     namespaces,
     title,
     tex: buildTex(title, declarations, imports),
+    csv: buildCsv(title, declarations),
   };
 }
 
@@ -227,6 +412,8 @@ function buildTex(
             ? `\n${escapeTexText(declaration.note)}\n`
             : "";
           return `\\subsection*{${capitalize(declaration.kind)}: \\texttt{${escapeTexText(declaration.name)}}}${note}
+\\noindent ${escapeTexText(declaration.naturalLanguage)}
+
 \\[
   ${declaration.latex}
 \\]`;
@@ -305,7 +492,7 @@ export function buildPdf(result: ConversionResult): Blob {
   if (result.imports.length) lines.push(`Imports: ${result.imports.join(", ")}`, "");
   result.declarations.forEach((declaration, index) => {
     lines.push(`${index + 1}. ${capitalize(declaration.kind)}: ${declaration.name}`);
-    wrapText(declaration.leanType).forEach((line) => lines.push(`   ${line}`));
+    wrapText(declaration.naturalLanguage).forEach((line) => lines.push(`   ${line}`));
     lines.push("");
   });
   if (!result.declarations.length) lines.push("No supported declarations were found.");

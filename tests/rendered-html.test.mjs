@@ -23,8 +23,11 @@ test("server-renders the LeanScribe converter", async () => {
   assert.match(html, /<title>LeanScribe/);
   assert.match(html, /From formal proof/);
   assert.match(html, /Lean conversion workspace/);
+  assert.match(html, /Paste Lean source/);
+  assert.match(html, /For every natural number n, n plus 0 equals n\./);
   assert.match(html, /Download \.tex/);
   assert.match(html, /Download \.pdf/);
+  assert.match(html, /Download \.csv/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/);
 });
 

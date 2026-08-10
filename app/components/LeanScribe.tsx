@@ -8,7 +8,7 @@ import {
   DEFAULT_SOURCE,
 } from "@/lib/lean-converter";
 
-type PreviewMode = "document" | "latex";
+type PreviewMode = "document" | "latex" | "csv";
 
 function safeBaseName(filename: string): string {
   return (filename.replace(/\.lean$/i, "") || "LeanScribe").replace(/[^a-zA-Z0-9_-]/g, "-");
@@ -61,8 +61,15 @@ export function LeanScribe() {
     download(buildPdf(result), `${safeBaseName(filename)}.pdf`);
   };
 
-  const copyTex = async () => {
-    await navigator.clipboard.writeText(result.tex);
+  const downloadCsv = () => {
+    download(
+      new Blob([result.csv], { type: "text/csv;charset=utf-8" }),
+      `${safeBaseName(filename)}.csv`,
+    );
+  };
+
+  const copyOutput = async () => {
+    await navigator.clipboard.writeText(previewMode === "csv" ? result.csv : result.tex);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
   };
@@ -91,11 +98,11 @@ export function LeanScribe() {
       </header>
 
       <section className="hero" aria-labelledby="page-title">
-        <p className="eyebrow"><span>Lean</span><i /> <span>LaTeX</span><i /> <span>PDF</span></p>
+        <p className="eyebrow"><span>Lean</span><i /> <span>Plain English</span><i /> <span>PDF · TeX · CSV</span></p>
         <h1 id="page-title">From formal proof<br />to finished page.</h1>
         <p className="hero-copy">
-          Drop in a <code>.lean</code> file. Get clean mathematical notation,
-          a publication-ready TeX source, and a readable PDF in seconds.
+          Paste or drop in a <code>.lean</code> file. LeanScribe translates it as
+          you type, then creates natural-language PDF, TeX, and CSV files.
         </p>
       </section>
 
@@ -103,7 +110,7 @@ export function LeanScribe() {
         <div className="workspace-heading">
           <div>
             <span className="step-label">01 / SOURCE</span>
-            <h2>Lean input</h2>
+            <h2>Paste Lean source</h2>
           </div>
           <div className="file-actions">
             <button className="text-button" type="button" onClick={() => fileInput.current?.click()}>
@@ -131,28 +138,29 @@ export function LeanScribe() {
         >
           <div className="editor-bar">
             <span className="file-badge"><b>λ</b> {filename}</span>
-            <span>{lineCount} lines · UTF-8</span>
+            <span className="live-status"><i /> Live conversion · {lineCount} lines</span>
           </div>
           <textarea
             className="source-editor"
             value={source}
             onChange={(event) => setSource(event.target.value)}
             spellCheck={false}
-            aria-label="Lean source editor"
+            aria-label="Paste or edit Lean source; output updates automatically"
+            placeholder="Paste the contents of a .lean file here…"
           />
           {dragging && <div className="drop-overlay">Drop your .lean file</div>}
         </div>
 
         <div className="conversion-rail" aria-hidden="true">
           <span />
-          <b>translating syntax</b>
+          <b>translating automatically</b>
           <span />
         </div>
 
         <div className="workspace-heading output-heading">
           <div>
             <span className="step-label">02 / OUTPUT</span>
-            <h2>Typeset document</h2>
+            <h2>Natural-language document</h2>
           </div>
           <div className="preview-tabs" role="tablist" aria-label="Output preview">
             <button
@@ -162,7 +170,7 @@ export function LeanScribe() {
               className={previewMode === "document" ? "active" : ""}
               onClick={() => setPreviewMode("document")}
             >
-              Document
+              Plain English
             </button>
             <button
               type="button"
@@ -173,13 +181,22 @@ export function LeanScribe() {
             >
               LaTeX
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={previewMode === "csv"}
+              className={previewMode === "csv" ? "active" : ""}
+              onClick={() => setPreviewMode("csv")}
+            >
+              CSV
+            </button>
           </div>
         </div>
 
         <div className="output-panel">
           {previewMode === "document" ? (
             <article className="paper-preview">
-              <div className="paper-kicker">FORMAL MATHEMATICS · LEAN 4</div>
+              <div className="paper-kicker">PLAIN-ENGLISH READING · FROM LEAN 4</div>
               <h3>{result.title}</h3>
               {result.imports.length > 0 && (
                 <p className="imports">Imports: {result.imports.join(", ")}</p>
@@ -193,8 +210,12 @@ export function LeanScribe() {
                     <em>line {declaration.line}</em>
                   </div>
                   <h4>{declaration.name.replace(/_/g, " ")}</h4>
-                  {declaration.note && <p>{declaration.note}</p>}
-                  <code>{declaration.leanType}</code>
+                  {declaration.note && <p className="declaration-note">{declaration.note}</p>}
+                  <p className="natural-language">{declaration.naturalLanguage}</p>
+                  <details>
+                    <summary>Lean signature</summary>
+                    <code>{declaration.leanType}</code>
+                  </details>
                 </section>
               )) : (
                 <div className="empty-output">
@@ -203,10 +224,15 @@ export function LeanScribe() {
                 </div>
               )}
             </article>
-          ) : (
+          ) : previewMode === "latex" ? (
             <div className="latex-preview">
-              <button type="button" onClick={() => void copyTex()}>{copied ? "Copied" : "Copy TeX"}</button>
+              <button type="button" onClick={() => void copyOutput()}>{copied ? "Copied" : "Copy TeX"}</button>
               <pre>{result.tex}</pre>
+            </div>
+          ) : (
+            <div className="latex-preview csv-preview">
+              <button type="button" onClick={() => void copyOutput()}>{copied ? "Copied" : "Copy CSV"}</button>
+              <pre>{result.csv}</pre>
             </div>
           )}
         </div>
@@ -214,12 +240,16 @@ export function LeanScribe() {
         <div className="export-bar">
           <div className="ready-state">
             <span aria-hidden="true">✓</span>
-            <p><b>Ready to export</b><small>{result.declarations.length} declarations translated</small></p>
+            <p><b>Converted automatically</b><small>{result.declarations.length} declarations explained in plain English</small></p>
           </div>
           <div className="export-actions">
             <button type="button" className="export secondary" onClick={downloadTex}>
               <span className="format-icon">T<span>E</span>X</span>
               <span><b>Download .tex</b><small>Editable source</small></span>
+            </button>
+            <button type="button" className="export secondary" onClick={downloadCsv}>
+              <span className="format-icon">CSV</span>
+              <span><b>Download .csv</b><small>Structured data</small></span>
             </button>
             <button type="button" className="export primary" onClick={downloadPdf}>
               <span className="format-icon">PDF</span>
@@ -235,9 +265,9 @@ export function LeanScribe() {
           <h2 id="how-title">One careful little pipeline.</h2>
         </div>
         <ol>
-          <li><span>1</span><div><b>Read</b><p>LeanScribe detects declarations and document metadata.</p></div></li>
-          <li><span>2</span><div><b>Translate</b><p>Lean symbols become conventional mathematical notation.</p></div></li>
-          <li><span>3</span><div><b>Export</b><p>Choose editable LaTeX or an instant, portable PDF.</p></div></li>
+          <li><span>1</span><div><b>Paste</b><p>Put a complete Lean file directly into the source area.</p></div></li>
+          <li><span>2</span><div><b>Understand</b><p>Declarations become readable explanations as you type.</p></div></li>
+          <li><span>3</span><div><b>Export</b><p>Download the result as PDF, editable TeX, or structured CSV.</p></div></li>
         </ol>
       </section>
 

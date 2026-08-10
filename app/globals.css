@@ -193,6 +193,14 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
 }
 .file-badge { color: #e7e4d9; }
 .file-badge b { margin-right: 8px; color: #8aa1ff; font: 400 17px/1 Georgia, serif; }
+.live-status { display: inline-flex; align-items: center; gap: 7px; }
+.live-status i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #45c894;
+  box-shadow: 0 0 0 3px rgba(69, 200, 148, .13);
+}
 .source-editor {
   display: block;
   width: 100%;
@@ -304,6 +312,22 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
   text-transform: capitalize;
 }
 .declaration p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.declaration .declaration-note { font-style: italic; }
+.declaration .natural-language {
+  margin: 10px 0 17px;
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.65;
+}
+.declaration details { color: var(--muted); }
+.declaration summary {
+  width: fit-content;
+  margin-bottom: 9px;
+  cursor: pointer;
+  font: 600 9px/1 var(--font-mono), monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
 .declaration code {
   display: block;
   overflow-wrap: anywhere;
@@ -339,6 +363,7 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
   white-space: pre-wrap;
   font: 400 12px/1.7 var(--font-mono), monospace;
 }
+.csv-preview pre { color: #d6ecd9; }
 .export-bar {
   min-height: 100px;
   display: flex;
@@ -365,7 +390,7 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
 .ready-state small, .export small { margin-top: 3px; color: var(--muted); font-size: 9px; }
 .export-actions { display: flex; gap: 9px; }
 .export {
-  min-width: 174px;
+  min-width: 166px;
   min-height: 61px;
   display: flex;
   align-items: center;
@@ -433,7 +458,7 @@ footer > span { justify-self: end; font-family: var(--font-mono), monospace; }
   .output-panel { padding: 14px; }
   .paper-preview { padding: 35px 24px; }
   .export-bar { align-items: stretch; flex-direction: column; }
-  .export-actions { width: 100%; }
+  .export-actions { width: 100%; flex-wrap: wrap; }
   .export { min-width: 0; flex: 1; padding: 10px; }
   .how-it-works { grid-template-columns: 1fr; gap: 45px; padding: 70px 24px; }
   footer { grid-template-columns: 1fr auto; padding: 25px 20px; }

@@ -1,14 +1,15 @@
 # LeanScribe
 
-LeanScribe is a private, browser-based converter that turns Lean 4 source files into polished LaTeX and readable PDF documents. Drop in a `.lean` file—or edit the sample in place—preview the extracted declarations, then download either format.
+LeanScribe is a private, browser-based converter that turns Lean 4 source files into plain-English documentation, polished LaTeX, readable PDF, and structured CSV files. Paste a complete `.lean` file into the editor—or drop one in—and every output updates automatically.
 
 ## Features
 
-- Drag-and-drop or open any UTF-8 `.lean` file
+- Paste, drag-and-drop, or open any UTF-8 `.lean` file
 - Detect theorems, lemmas, examples, definitions, axioms, structures, and inductive types
+- Turn binders, assumptions, relations, and arithmetic expressions into readable English
 - Translate common Lean and Unicode symbols into conventional LaTeX notation
-- Preview the generated document and its editable TeX source
-- Download `.tex` and `.pdf` files directly in the browser
+- Preview plain-English, LaTeX, and CSV output as the source changes
+- Download `.pdf`, `.tex`, and `.csv` files directly in the browser
 - Keep source code private: conversion is local and no file is uploaded
 - Responsive, keyboard-accessible interface
 
@@ -36,7 +37,7 @@ npm run lint    # Run ESLint
 
 ## How conversion works
 
-LeanScribe scans the source for top-level formal declarations and document metadata. It maps common Lean operators and types—such as `→`, `∀`, `≤`, `Nat`, and `ℝ`—to LaTeX equivalents, then assembles a standalone `.tex` document. The PDF export is generated locally as a portable reading copy.
+LeanScribe scans the source for top-level formal declarations and document metadata. It recognizes variables and hypotheses, then describes common Lean operators and types—such as `→`, `∀`, `≤`, `Nat`, and `ℝ`—in natural language. The same conversion powers a standalone `.tex` document, a portable PDF reading copy, and a CSV table with one declaration per row.
 
 LeanScribe is a documentation converter, not a Lean compiler or proof checker. It preserves the original declaration text in the reading copy and does not validate whether a proof type-checks. For formal verification, run the source through Lean 4 or Lake before publishing.
 
@@ -49,7 +50,7 @@ app/
   layout.tsx                 Site metadata and fonts
   page.tsx                   Home route
 lib/
-  lean-converter.ts          Lean parsing, TeX translation, and PDF generation
+  lean-converter.ts          Parsing, natural language, TeX, CSV, and PDF generation
 tests/
   rendered-html.test.mjs     Production-render smoke tests
 ```
