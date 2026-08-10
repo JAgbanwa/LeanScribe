@@ -29,6 +29,77 @@ LeanScribe uses this exact wording for its strongest current claim:
 
 It does **not** call generated English “formally verified.” Structural correspondence is narrower than mathematical review.
 
+## Prose engine v2
+
+The renderer no longer emits one clause per binder. It plans the sentence, and it emits
+its own provenance.
+
+| | |
+|---|---|
+| before | `for every a : ℝ; for every b : ℝ; assuming h : a ≤ b; the conclusion is a + 1 ≤ b + 1.` |
+| after | Let $a$ and $b$ be real numbers. Suppose $a \le b$. Then $a + 1 \le b + 1$. |
+
+`lib/prose-engine.ts` merges same-type binders, turns concrete types into English nouns
+(`Set α` → "subset of $\alpha$"), folds instance assumptions into the carrier noun phrase
+(`[TopologicalSpace α] [T2Space α]` → "a Hausdorff topological space $\alpha$"), folds unary
+adjectival hypotheses into the object they constrain, drops hypothesis names that nothing
+references, and picks a fresh bound variable so `Tendsto f (𝓝 x) (𝓝 (f x))` does not render
+as "f(x) tends to f x as x tends to x".
+
+### Coverage without a one-clause-per-binder ledger
+
+The previous ledger was verifiable only because the prose was a mechanical
+transliteration. Idiomatic prose breaks any one-to-one span mapping, so the planner
+returns spans that already carry the component ids they express:
+
+```ts
+{ text: "compact nonempty subset of ", mode: "text", refs: ["d0:h0", "d0:h1", "d0:b0"] }
+```
+
+Coverage is the inversion of that map, so one clause can account for several components
+and the prose is free to read like prose. Every component ends in exactly one state:
+
+- **covered** — at least one span expresses it
+- **suppressed** — deliberately not surfaced, with a recorded justification and a pointer
+  to the component that determines it (`DecidableEq α` → proof-irrelevant scaffolding)
+- **unmapped** — nothing expressed it and nothing justified its absence. Hard failure.
+
+Suppressed and unmapped are different states on purpose. Suppressing a component with a
+reason is editing; suppressing one without a reason is losing it.
+
+### What now blocks the badge
+
+An unrecognised typeclass or namespace sets `approximate` on the trace and withholds the
+structural claim. If the lexicon has no entry for `IsFiniteMeasureOnCompacts`, LeanScribe
+does not know what the statement asserts; it renders the term verbatim, says so, and does
+not claim correspondence.
+
+### Provenance
+
+`fnv1a64` is gone. `lib/provenance.ts` supplies SHA-256, and hashes the prose span stream
+as well as the source, so a reader can tell whether the text in front of them is the text
+that was checked.
+
+### Evaluation
+
+```bash
+npm run prose:eval -- mathlib-sample.jsonl
+```
+
+Reports the pass rate, unmapped components, approximation rate, and a **lexicon work
+queue**: which typeclasses and predicate heads block the most declarations. That last
+table is the useful one — a pass rate is a vanity metric, a ranked list of missing lexicon
+entries is a plan.
+
+### Known limitations
+
+- The notation layer rewrites pretty-printed strings, not an expression tree. Adequate for
+  binder types and short conclusions, wrong for deep nesting. Every fallback is recorded
+  and costs the structural claim. The fix is for the extractor to emit a per-component AST.
+- Statements only. Proof exposition is untouched.
+- The lexicons cover roughly 40 typeclasses and 25 predicates. Mathlib has far more; the
+  work queue exists to make that grind measurable.
+
 ## Product boundary
 
 | Capability | Current status | Trust boundary |

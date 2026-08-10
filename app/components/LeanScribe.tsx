@@ -24,6 +24,7 @@ import {
   publicationToMarkdown,
 } from "@/lib/semantic-ir";
 import type { ProseTrustLevel, SemanticIRBundle } from "@/lib/semantic-ir";
+import { shortHash } from "@/lib/provenance";
 
 type PreviewMode = "document" | "latex" | "csv";
 type ExpertState = "idle" | "loading" | "ready" | "error";
@@ -500,18 +501,38 @@ export function LeanScribe({ expertEnabled = false }: { expertEnabled?: boolean 
                     <code>{declaration.leanType}</code>
                   </details>
                   <details className="coverage-ledger" open={index === 0}>
-                    <summary>Semantic coverage ledger · {declaration.trace.covered}/{declaration.trace.total} structurally checked</summary>
+                    <summary>
+                      Semantic coverage ledger · {declaration.trace.covered}/{declaration.trace.total} covered
+                      {declaration.trace.suppressed > 0 && ` · ${declaration.trace.suppressed} suppressed`}
+                      {declaration.trace.unmapped > 0 && ` · ${declaration.trace.unmapped} unmapped`}
+                    </summary>
                     <div className="ledger-table" role="table" aria-label={`Coverage ledger for ${declaration.name}`}>
                       {declaration.trace.entries.map((entry) => (
                         <div className="ledger-row" role="row" key={entry.id}>
                           <span role="cell">{entry.semanticRole}</span>
                           <code role="cell">{entry.formalText}</code>
-                          <p role="cell">{entry.proseText}</p>
+                          <p role="cell">
+                            {entry.proseText || (
+                              <em>
+                                {entry.justification
+                                  ? `suppressed — ${entry.justification}`
+                                  : "not expressed by any prose span"}
+                              </em>
+                            )}
+                          </p>
                           <b role="cell" className={`coverage-${entry.status}`}>{entry.status}</b>
                         </div>
                       ))}
                     </div>
                   </details>
+                  {declaration.trace.lexiconGaps.length > 0 && (
+                    <div className="caveats">
+                      <p>
+                        Rendered without a lexicon entry for {declaration.trace.lexiconGaps.join(", ")}.
+                        The term is shown verbatim and the structural claim is withheld.
+                      </p>
+                    </div>
+                  )}
                   <div className="formal-trust">
                     <b>{declaration.trace.highestTrustEligible ? "STRUCTURAL CHECKS PASSED" : "DRAFT · TRUST BLOCKED"}</b>
                     <p>{declaration.trust.statement}</p>
@@ -520,6 +541,7 @@ export function LeanScribe({ expertEnabled = false }: { expertEnabled?: boolean 
                       <div><dt>Lean</dt><dd>{declaration.trust.leanVersion || "not elaborated"}</dd></div>
                       <div><dt>Axioms</dt><dd>{declaration.trust.axioms.join(", ") || (declaration.trust.usesSorry === null ? "not audited" : "none")}</dd></div>
                       <div><dt>Human review</dt><dd>{declaration.trust.humanReviewed ? "recorded" : "not recorded"}</dd></div>
+                      <div><dt>Prose hash</dt><dd><code>{shortHash(declaration.trace.proseHash)}</code></dd></div>
                     </dl>
                   </div>
                 </section>
