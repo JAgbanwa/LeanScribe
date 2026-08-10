@@ -1,14 +1,22 @@
 "use client";
 
-import { ChangeEvent, DragEvent, useMemo, useRef, useState } from "react";
+import {
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import type { ChangeEvent, ClipboardEvent, DragEvent } from "react";
 import {
   buildPdf,
   capitalize,
   convertLean,
   DEFAULT_SOURCE,
+  mergeSemanticTranslation,
 } from "@/lib/lean-converter";
+import type { SemanticTranslation } from "@/lib/semantic-schema";
 
 type PreviewMode = "document" | "latex" | "csv";
+type ExpertState = "idle" | "loading" | "ready" | "error";
 
 function safeBaseName(filename: string): string {
   return (filename.replace(/\.lean$/i, "") || "LeanScribe").replace(/[^a-zA-Z0-9_-]/g, "-");
@@ -29,8 +37,69 @@ export function LeanScribe() {
   const [previewMode, setPreviewMode] = useState<PreviewMode>("document");
   const [dragging, setDragging] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [semantic, setSemantic] = useState<{
+    translation: SemanticTranslation;
+    model: string;
+  } | null>(null);
+  const [expertState, setExpertState] = useState<ExpertState>("idle");
+  const [expertMessage, setExpertMessage] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
-  const result = useMemo(() => convertLean(source, filename), [source, filename]);
+  const expertRequest = useRef(0);
+  const localResult = useMemo(() => convertLean(source, filename), [source, filename]);
+  const result = useMemo(
+    () =>
+      semantic
+        ? mergeSemanticTranslation(localResult, semantic.translation, semantic.model)
+        : localResult,
+    [localResult, semantic],
+  );
+
+  const updateSource = (nextSource: string) => {
+    expertRequest.current += 1;
+    setSource(nextSource);
+    setSemantic(null);
+    setExpertState("idle");
+    setExpertMessage("");
+  };
+
+  const runExpertTranslation = async (
+    nextSource = source,
+    nextFilename = filename,
+  ) => {
+    if (!nextSource.trim()) return;
+    const requestId = expertRequest.current + 1;
+    expertRequest.current = requestId;
+    setExpertState("loading");
+    setExpertMessage("Reading the complete file, its declarations, and proof structure…");
+
+    try {
+      const response = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ source: nextSource, filename: nextFilename }),
+      });
+      const payload = (await response.json()) as {
+        translation?: SemanticTranslation;
+        model?: string;
+        error?: string;
+      };
+      if (!response.ok || !payload.translation) {
+        throw new Error(payload.error || "Expert translation failed.");
+      }
+      if (expertRequest.current !== requestId) return;
+      setSemantic({ translation: payload.translation, model: payload.model || "expert model" });
+      setExpertState("ready");
+      setExpertMessage(
+        `${payload.translation.declarations.length} declarations interpreted with whole-file context.`,
+      );
+    } catch (error) {
+      if (expertRequest.current !== requestId) return;
+      setExpertState("error");
+      setExpertMessage(
+        error instanceof Error ? error.message : "Expert translation failed.",
+      );
+    }
+  };
 
   const loadFile = async (file?: File) => {
     if (!file) return;
@@ -38,8 +107,10 @@ export function LeanScribe() {
       fileInput.current?.focus();
       return;
     }
+    const text = await file.text();
     setFilename(file.name);
-    setSource(await file.text());
+    updateSource(text);
+    void runExpertTranslation(text, file.name);
   };
 
   const onFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -51,6 +122,19 @@ export function LeanScribe() {
     event.preventDefault();
     setDragging(false);
     void loadFile(event.dataTransfer.files[0]);
+  };
+
+  const onPaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    const pasted = event.clipboardData.getData("text");
+    if (!pasted) return;
+    event.preventDefault();
+    const editor = event.currentTarget;
+    const nextSource =
+      source.slice(0, editor.selectionStart) +
+      pasted +
+      source.slice(editor.selectionEnd);
+    updateSource(nextSource);
+    void runExpertTranslation(nextSource, filename);
   };
 
   const downloadTex = () => {
@@ -85,7 +169,7 @@ export function LeanScribe() {
         </a>
         <div className="privacy-note">
           <span className="privacy-dot" aria-hidden="true" />
-          Local processing · your code stays here
+          Local fallback · expert analysis on paste
         </div>
         <a
           className="github-link"
@@ -101,8 +185,9 @@ export function LeanScribe() {
         <p className="eyebrow"><span>Lean</span><i /> <span>Plain English</span><i /> <span>PDF · TeX · CSV</span></p>
         <h1 id="page-title">From formal proof<br />to finished page.</h1>
         <p className="hero-copy">
-          Paste or drop in a <code>.lean</code> file. LeanScribe translates it as
-          you type, then creates natural-language PDF, TeX, and CSV files.
+          Paste or drop in a <code>.lean</code> file. LeanScribe reads the whole
+          proof, explains its mathematics and strategy, then builds PDF, TeX,
+          and CSV documentation.
         </p>
       </section>
 
@@ -116,7 +201,7 @@ export function LeanScribe() {
             <button className="text-button" type="button" onClick={() => fileInput.current?.click()}>
               Open .lean
             </button>
-            <button className="text-button muted" type="button" onClick={() => { setSource(""); setFilename("Main.lean"); }}>
+            <button className="text-button muted" type="button" onClick={() => { updateSource(""); setFilename("Main.lean"); }}>
               Clear
             </button>
             <input
@@ -143,7 +228,8 @@ export function LeanScribe() {
           <textarea
             className="source-editor"
             value={source}
-            onChange={(event) => setSource(event.target.value)}
+            onChange={(event) => updateSource(event.target.value)}
+            onPaste={onPaste}
             spellCheck={false}
             aria-label="Paste or edit Lean source; output updates automatically"
             placeholder="Paste the contents of a .lean file here…"
@@ -151,9 +237,38 @@ export function LeanScribe() {
           {dragging && <div className="drop-overlay">Drop your .lean file</div>}
         </div>
 
+        <div className={`expert-panel state-${expertState}`} aria-live="polite">
+          <div className="expert-copy">
+            <span className="expert-badge"><i aria-hidden="true">✦</i> GPT-5.6 SOL · HIGH REASONING</span>
+            <h3>Proof-aware semantic translation</h3>
+            <p>
+              Reads imports, binders, definitions, dependencies, and visible proof tactics
+              together—then writes precise mathematical prose instead of replacing symbols.
+            </p>
+            <small>
+              Expert mode sends the pasted source to OpenAI for analysis. The instant local
+              translation remains available without it.
+            </small>
+          </div>
+          <div className="expert-action">
+            <button
+              type="button"
+              onClick={() => void runExpertTranslation()}
+              disabled={!source.trim() || expertState === "loading"}
+            >
+              {expertState === "loading"
+                ? "Interpreting proof…"
+                : expertState === "ready"
+                  ? "Re-run expert translation"
+                  : "Generate expert translation"}
+            </button>
+            <span>{expertMessage || "Pasting or opening a file starts expert mode automatically."}</span>
+          </div>
+        </div>
+
         <div className="conversion-rail" aria-hidden="true">
           <span />
-          <b>translating automatically</b>
+          <b>{result.mode === "expert" ? "semantic reading complete" : "instant local reading"}</b>
           <span />
         </div>
 
@@ -196,8 +311,17 @@ export function LeanScribe() {
         <div className="output-panel">
           {previewMode === "document" ? (
             <article className="paper-preview">
-              <div className="paper-kicker">PLAIN-ENGLISH READING · FROM LEAN 4</div>
+              <div className="paper-kicker">
+                {result.mode === "expert" ? "EXPERT SEMANTIC READING" : "INSTANT LOCAL READING"} · FROM LEAN 4
+              </div>
               <h3>{result.title}</h3>
+              {result.overview && <p className="document-overview">{result.overview}</p>}
+              {result.prerequisites.length > 0 && (
+                <div className="prerequisites">
+                  <b>Prerequisites</b>
+                  <p>{result.prerequisites.join(" · ")}</p>
+                </div>
+              )}
               {result.imports.length > 0 && (
                 <p className="imports">Imports: {result.imports.join(", ")}</p>
               )}
@@ -207,11 +331,32 @@ export function LeanScribe() {
                   <div className="declaration-meta">
                     <span>{String(index + 1).padStart(2, "0")}</span>
                     <b>{capitalize(declaration.kind)}</b>
-                    <em>line {declaration.line}</em>
+                    {declaration.line > 0 && <em>line {declaration.line}</em>}
+                    {declaration.confidence && (
+                      <strong className={`confidence ${declaration.confidence}`}>
+                        {declaration.confidence} confidence
+                      </strong>
+                    )}
                   </div>
                   <h4>{declaration.name.replace(/_/g, " ")}</h4>
                   {declaration.note && <p className="declaration-note">{declaration.note}</p>}
                   <p className="natural-language">{declaration.naturalLanguage}</p>
+                  {declaration.proofStrategy && (
+                    <div className="proof-strategy">
+                      <b>Proof strategy</b>
+                      <p>{declaration.proofStrategy}</p>
+                    </div>
+                  )}
+                  {declaration.dependencies && declaration.dependencies.length > 0 && (
+                    <p className="dependency-line">
+                      <b>Uses:</b> {declaration.dependencies.join(", ")}
+                    </p>
+                  )}
+                  {declaration.caveats && declaration.caveats.length > 0 && (
+                    <div className="caveats">
+                      {declaration.caveats.map((caveat) => <p key={caveat}>{caveat}</p>)}
+                    </div>
+                  )}
                   <details>
                     <summary>Lean signature</summary>
                     <code>{declaration.leanType}</code>
@@ -222,6 +367,22 @@ export function LeanScribe() {
                   <b>No declarations yet</b>
                   <span>Add a theorem, lemma, example, definition, axiom, structure, or inductive type.</span>
                 </div>
+              )}
+              {result.glossary.length > 0 && (
+                <section className="glossary">
+                  <h4>Glossary</h4>
+                  <dl>
+                    {result.glossary.map((entry) => (
+                      <div key={entry.term}><dt>{entry.term}</dt><dd>{entry.explanation}</dd></div>
+                    ))}
+                  </dl>
+                </section>
+              )}
+              {result.warnings.length > 0 && (
+                <section className="document-warnings">
+                  <b>Interpretive notes</b>
+                  {result.warnings.map((warning) => <p key={warning}>{warning}</p>)}
+                </section>
               )}
             </article>
           ) : previewMode === "latex" ? (
@@ -239,8 +400,11 @@ export function LeanScribe() {
 
         <div className="export-bar">
           <div className="ready-state">
-            <span aria-hidden="true">✓</span>
-            <p><b>Converted automatically</b><small>{result.declarations.length} declarations explained in plain English</small></p>
+            <span aria-hidden="true">{result.mode === "expert" ? "✦" : "✓"}</span>
+            <p>
+              <b>{result.mode === "expert" ? "Expert documentation ready" : "Local draft ready"}</b>
+              <small>{result.declarations.length} declarations · {result.mode === "expert" ? result.model : "rule-based fallback"}</small>
+            </p>
           </div>
           <div className="export-actions">
             <button type="button" className="export secondary" onClick={downloadTex}>
@@ -261,13 +425,13 @@ export function LeanScribe() {
 
       <section className="how-it-works" aria-labelledby="how-title">
         <div>
-          <span className="step-label">NO SERVER. NO SETUP.</span>
-          <h2 id="how-title">One careful little pipeline.</h2>
+          <span className="step-label">WHOLE-FILE REASONING</span>
+          <h2 id="how-title">Reverse formalization, with context.</h2>
         </div>
         <ol>
-          <li><span>1</span><div><b>Paste</b><p>Put a complete Lean file directly into the source area.</p></div></li>
-          <li><span>2</span><div><b>Understand</b><p>Declarations become readable explanations as you type.</p></div></li>
-          <li><span>3</span><div><b>Export</b><p>Download the result as PDF, editable TeX, or structured CSV.</p></div></li>
+          <li><span>1</span><div><b>Read globally</b><p>Imports, notation, declarations, and dependencies are considered together.</p></div></li>
+          <li><span>2</span><div><b>Interpret rigorously</b><p>Statements, assumptions, and visible proof strategies become precise prose.</p></div></li>
+          <li><span>3</span><div><b>Publish consistently</b><p>The same semantic document drives PDF, editable TeX, and structured CSV.</p></div></li>
         </ol>
       </section>
 

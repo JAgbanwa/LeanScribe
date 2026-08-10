@@ -19,9 +19,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const title = "LeanScribe — Lean to Plain English, PDF, TeX & CSV";
+  const title = "LeanScribe — Proof-aware Lean to PDF, TeX & CSV";
   const description =
-    "Paste Lean source and instantly turn it into plain-English PDF, TeX, and CSV documents in your browser.";
+    "Reverse-formalize Lean 4 source into rigorous natural-language PDF, TeX, and CSV documentation with whole-file context.";
 
   return {
     metadataBase: new URL(origin),

@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { LeanScribe } from "./components/LeanScribe";
 
 export const metadata: Metadata = {
-  title: "LeanScribe — Lean to Plain English, PDF, TeX & CSV",
+  title: "LeanScribe — Proof-aware Lean to PDF, TeX & CSV",
   description:
-    "Paste Lean source and instantly turn it into plain-English PDF, TeX, and CSV documents in your browser.",
+    "Reverse-formalize Lean 4 source into rigorous natural-language PDF, TeX, and CSV documentation with whole-file context.",
 };
 
 export default function Home() {
