@@ -1,11 +1,17 @@
+import type { SemanticTranslation } from "./semantic-schema";
+
 export type DeclarationKind =
   | "theorem"
   | "lemma"
+  | "corollary"
   | "example"
   | "definition"
   | "axiom"
   | "structure"
-  | "inductive";
+  | "inductive"
+  | "class"
+  | "instance"
+  | "other";
 
 export type LeanDeclaration = {
   kind: DeclarationKind;
@@ -15,6 +21,18 @@ export type LeanDeclaration = {
   naturalLanguage: string;
   line: number;
   note?: string;
+  proofStrategy?: string;
+  dependencies?: string[];
+  caveats?: string[];
+  confidence?: "high" | "medium" | "low";
+  provenance?: {
+    extractionStatus: "elaborated" | "unelaborated" | "incomplete";
+    sourceHash: string;
+    coverage: string;
+    proofStatus: string;
+    axioms: string[];
+    trustStatement: string;
+  };
 };
 
 export type ConversionResult = {
@@ -22,6 +40,12 @@ export type ConversionResult = {
   imports: string[];
   namespaces: string[];
   title: string;
+  overview: string;
+  prerequisites: string[];
+  glossary: Array<{ term: string; explanation: string }>;
+  warnings: string[];
+  mode: "local" | "expert";
+  model?: string;
   tex: string;
   csv: string;
 };
@@ -47,16 +71,19 @@ export const DEFAULT_SOURCE = SAMPLE_SOURCE;
 const kindMap: Record<string, DeclarationKind> = {
   theorem: "theorem",
   lemma: "lemma",
+  corollary: "corollary",
   example: "example",
   def: "definition",
   abbrev: "definition",
   axiom: "axiom",
   structure: "structure",
   inductive: "inductive",
+  class: "class",
+  instance: "instance",
 };
 
 function titleFromSource(source: string, filename: string): string {
-  const heading = source.match(/(?:\/\-!|--!)\s*\n?\s*#\s+([^\n*]+)/);
+  const heading = source.match(/(?:\/-!|--!)\s*\n?\s*#\s+([^\n*]+)/);
   if (heading?.[1]) return heading[1].trim();
   const cleanName = filename.replace(/\.lean$/i, "").replace(/[_-]+/g, " ");
   return cleanName
@@ -298,6 +325,9 @@ function describeDeclaration(
   if (kind === "structure" || kind === "inductive") {
     return `The ${kind} type “${humanizeIdentifier(name)}” is described as follows: ${sentence}`;
   }
+  if (kind === "theorem" || kind === "lemma" || kind === "corollary") {
+    return `This ${kind} states: ${sentence}`;
+  }
   return sentence;
 }
 
@@ -306,15 +336,45 @@ function csvCell(value: string | number): string {
 }
 
 function buildCsv(title: string, declarations: LeanDeclaration[]): string {
-  const header = ["document", "kind", "name", "line", "natural_language", "lean_signature", "latex"];
+  const header = [
+    "document",
+    "kind",
+    "natural_language_kind",
+    "name",
+    "line",
+    "natural_language",
+    "proof_strategy",
+    "dependencies",
+    "confidence",
+    "caveats",
+    "lean_signature",
+    "latex",
+    "extraction_status",
+    "semantic_coverage",
+    "proof_status",
+    "axioms",
+    "source_fingerprint",
+    "trust_statement",
+  ];
   const rows = declarations.map((declaration) => [
     title,
+    declaration.kind,
     declaration.kind,
     declaration.name,
     declaration.line,
     declaration.naturalLanguage,
+    declaration.proofStrategy ?? "",
+    (declaration.dependencies ?? []).join("; "),
+    declaration.confidence ?? "local",
+    (declaration.caveats ?? []).join("; "),
     declaration.leanType,
     declaration.latex,
+    declaration.provenance?.extractionStatus ?? "unelaborated",
+    declaration.provenance?.coverage ?? "not checked",
+    declaration.provenance?.proofStatus ?? "unelaborated",
+    declaration.provenance?.axioms.join("; ") ?? "not audited",
+    declaration.provenance?.sourceHash ?? "not supplied",
+    declaration.provenance?.trustStatement ?? "No semantic trust claim.",
   ]);
   return [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
 }
@@ -331,7 +391,7 @@ export function convertLean(source: string, filename = "Main.lean"): ConversionR
     const trimmed = line.trim();
     if (trimmed.startsWith("/-!")) {
       inDocComment = true;
-      pendingNote = trimmed.replace(/^\/\-!\s*/, "").replace(/-\/$/, "").trim();
+      pendingNote = trimmed.replace(/^\/-!\s*/, "").replace(/-\/$/, "").trim();
       if (trimmed.endsWith("-/")) inDocComment = false;
       return;
     }
@@ -362,7 +422,7 @@ export function convertLean(source: string, filename = "Main.lean"): ConversionR
     }
 
     const match = line.match(
-      /^\s*(theorem|lemma|example|def|abbrev|axiom|structure|inductive)\s*(?:([^\s(:]+)\s*)?(.*)$/,
+      /^\s*(theorem|lemma|corollary|example|def|abbrev|axiom|structure|inductive|class|instance)\s*(?:([^\s(:]+)\s*)?(.*)$/,
     );
     if (!match) return;
 
@@ -395,15 +455,83 @@ export function convertLean(source: string, filename = "Main.lean"): ConversionR
     imports,
     namespaces,
     title,
+    overview: "",
+    prerequisites: [],
+    glossary: [],
+    warnings: [],
+    mode: "local",
     tex: buildTex(title, declarations, imports),
     csv: buildCsv(title, declarations),
   };
+}
+
+export function mergeSemanticTranslation(
+  local: ConversionResult,
+  semantic: SemanticTranslation,
+  model: string,
+): ConversionResult {
+  const unusedLocal = [...local.declarations];
+  const declarations: LeanDeclaration[] = semantic.declarations.map((declaration, index) => {
+    const matchIndex = unusedLocal.findIndex(
+      (candidate) =>
+        candidate.name === declaration.name ||
+        candidate.name.replace(/\.\d+$/, "") === declaration.name,
+    );
+    const fallbackIndex = matchIndex >= 0 ? matchIndex : Math.min(index, unusedLocal.length - 1);
+    const localDeclaration = fallbackIndex >= 0 ? unusedLocal.splice(fallbackIndex, 1)[0] : undefined;
+
+    return {
+      // The parser reads the source keyword directly, so it is the authority for
+      // declaration type. Expert prose may enrich a declaration, but must not
+      // silently turn a theorem into a lemma (or vice versa).
+      kind: localDeclaration?.kind ?? declaration.kind,
+      name: declaration.name || localDeclaration?.name || `declaration_${index + 1}`,
+      leanType: declaration.sourceSignature || localDeclaration?.leanType || "(signature unavailable)",
+      latex: declaration.mathematicalStatementLatex || localDeclaration?.latex || "",
+      naturalLanguage: declaration.naturalLanguage,
+      line: localDeclaration?.line ?? 0,
+      note: localDeclaration?.note,
+      proofStrategy: declaration.proofStrategy,
+      dependencies: declaration.dependencies,
+      caveats: declaration.caveats,
+      confidence: declaration.confidence,
+    };
+  });
+
+  const result: ConversionResult = {
+    ...local,
+    title: semantic.title || local.title,
+    overview: semantic.overview,
+    prerequisites: semantic.prerequisites,
+    glossary: semantic.glossary,
+    warnings: semantic.warnings,
+    declarations,
+    mode: "expert",
+    model,
+    tex: "",
+    csv: "",
+  };
+  result.tex = buildTex(
+    result.title,
+    result.declarations,
+    result.imports,
+    result.overview,
+    result.prerequisites,
+    result.glossary,
+    result.warnings,
+  );
+  result.csv = buildCsv(result.title, result.declarations);
+  return result;
 }
 
 function buildTex(
   title: string,
   declarations: LeanDeclaration[],
   imports: string[],
+  overview = "",
+  prerequisites: string[] = [],
+  glossary: Array<{ term: string; explanation: string }> = [],
+  warnings: string[] = [],
 ): string {
   const content = declarations.length
     ? declarations
@@ -411,8 +539,20 @@ function buildTex(
           const note = declaration.note
             ? `\n${escapeTexText(declaration.note)}\n`
             : "";
-          return `\\subsection*{${capitalize(declaration.kind)}: \\texttt{${escapeTexText(declaration.name)}}}${note}
-\\noindent ${escapeTexText(declaration.naturalLanguage)}
+          const strategy = declaration.proofStrategy
+            ? `\n\n\\paragraph{Proof strategy.} ${escapeTexText(declaration.proofStrategy)}`
+            : "";
+          const dependencies = declaration.dependencies?.length
+            ? `\n\n\\paragraph{Dependencies.} ${escapeTexText(declaration.dependencies.join(", "))}`
+            : "";
+          const caveats = declaration.caveats?.length
+            ? `\n\n\\paragraph{Caveats.} ${escapeTexText(declaration.caveats.join(" "))}`
+            : "";
+          const provenance = declaration.provenance
+            ? `\n\n\\paragraph{Formal trust.} ${escapeTexText(declaration.provenance.trustStatement)} Coverage: ${escapeTexText(declaration.provenance.coverage)}. Proof status: ${escapeTexText(declaration.provenance.proofStatus)}. Axioms: ${escapeTexText(declaration.provenance.axioms.join(", ") || "none")}. Source: \\texttt{${escapeTexText(declaration.provenance.sourceHash)}}.`
+            : "";
+          return `\\subsection*{Natural-language ${capitalize(declaration.kind)}: \\texttt{${escapeTexText(declaration.name)}}}${note}
+\\noindent ${escapeTexText(declaration.naturalLanguage)}${strategy}${dependencies}${caveats}${provenance}
 
 \\[
   ${declaration.latex}
@@ -436,7 +576,9 @@ function buildTex(
 \\maketitle
 \\noindent\\textcolor{leanscribe}{\\rule{\\linewidth}{1.5pt}}
 
-${imports.length ? `\\small\\textit{Imports: ${escapeTexText(imports.join(", "))}}\\normalsize\n\n` : ""}${content}
+${overview ? `\\section*{Overview}\n${escapeTexText(overview)}\n\n` : ""}${prerequisites.length ? `\\paragraph{Prerequisites.} ${escapeTexText(prerequisites.join("; "))}\n\n` : ""}${imports.length ? `\\small\\textit{Imports: ${escapeTexText(imports.join(", "))}}\\normalsize\n\n` : ""}${content}
+
+${glossary.length ? `\\section*{Glossary}\n${glossary.map((entry) => `\\paragraph{${escapeTexText(entry.term)}} ${escapeTexText(entry.explanation)}`).join("\n\n")}\n` : ""}${warnings.length ? `\\section*{Interpretive notes}\n\\begin{itemize}\n${warnings.map((warning) => `  \\item ${escapeTexText(warning)}`).join("\n")}\n\\end{itemize}\n` : ""}
 
 \\end{document}
 `;
@@ -444,6 +586,22 @@ ${imports.length ? `\\small\\textit{Imports: ${escapeTexText(imports.join(", "))
 
 export function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+export function refreshConversionExports(result: ConversionResult): ConversionResult {
+  return {
+    ...result,
+    tex: buildTex(
+      result.title,
+      result.declarations,
+      result.imports,
+      result.overview,
+      result.prerequisites,
+      result.glossary,
+      result.warnings,
+    ),
+    csv: buildCsv(result.title, result.declarations),
+  };
 }
 
 function asciiPdfText(value: string): string {
@@ -489,12 +647,61 @@ function pdfEscape(value: string): string {
 
 export function buildPdf(result: ConversionResult): Blob {
   const lines: string[] = [result.title, "Generated by LeanScribe", ""];
+  if (result.overview) {
+    lines.push("Overview");
+    wrapText(result.overview).forEach((line) => lines.push(`  ${line}`));
+    lines.push("");
+  }
+  if (result.prerequisites.length) {
+    lines.push("Prerequisites");
+    result.prerequisites.forEach((item) =>
+      wrapText(item, 80).forEach((line) => lines.push(`  - ${line}`)),
+    );
+    lines.push("");
+  }
   if (result.imports.length) lines.push(`Imports: ${result.imports.join(", ")}`, "");
   result.declarations.forEach((declaration, index) => {
-    lines.push(`${index + 1}. ${capitalize(declaration.kind)}: ${declaration.name}`);
+    lines.push(`${index + 1}. Natural-language ${capitalize(declaration.kind)}: ${declaration.name}`);
     wrapText(declaration.naturalLanguage).forEach((line) => lines.push(`   ${line}`));
+    if (declaration.proofStrategy) {
+      wrapText(`Proof strategy: ${declaration.proofStrategy}`, 80).forEach((line) =>
+        lines.push(`   ${line}`),
+      );
+    }
+    if (declaration.dependencies?.length) {
+      wrapText(`Dependencies: ${declaration.dependencies.join(", ")}`, 80).forEach((line) =>
+        lines.push(`   ${line}`),
+      );
+    }
+    if (declaration.caveats?.length) {
+      wrapText(`Caveats: ${declaration.caveats.join(" ")}`, 80).forEach((line) =>
+        lines.push(`   ${line}`),
+      );
+    }
+    if (declaration.provenance) {
+      wrapText(`Formal trust: ${declaration.provenance.trustStatement}`, 80).forEach((line) =>
+        lines.push(`   ${line}`),
+      );
+      wrapText(`Coverage: ${declaration.provenance.coverage}; proof: ${declaration.provenance.proofStatus}; axioms: ${declaration.provenance.axioms.join(", ") || "none"}; source: ${declaration.provenance.sourceHash}`, 80).forEach((line) =>
+        lines.push(`   ${line}`),
+      );
+    }
     lines.push("");
   });
+  if (result.glossary.length) {
+    lines.push("Glossary");
+    result.glossary.forEach((entry) =>
+      wrapText(`${entry.term}: ${entry.explanation}`, 80).forEach((line) => lines.push(`  ${line}`)),
+    );
+    lines.push("");
+  }
+  if (result.warnings.length) {
+    lines.push("Interpretive notes");
+    result.warnings.forEach((warning) =>
+      wrapText(warning, 80).forEach((line) => lines.push(`  - ${line}`)),
+    );
+    lines.push("");
+  }
   if (!result.declarations.length) lines.push("No supported declarations were found.");
 
   const linesPerPage = 45;
