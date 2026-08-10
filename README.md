@@ -1,131 +1,153 @@
 # LeanScribe
 
-LeanScribe reverse-formalizes Lean 4 source into rigorous natural-language documentation, polished LaTeX, readable PDF, and structured CSV. Its expert mode reads a complete `.lean` file as one mathematical artifact: imports, namespaces, binders, dependencies, theorem statements, and visible proof strategy are interpreted together.
+LeanScribe is an open-source semantic publishing layer for Lean 4: elaborated formal declarations in, readable and traceable mathematical literature out.
 
-An instant, rule-based converter is available in the browser. On the public deployment, conversion and file generation stay on the visitor's device and expert AI mode is disabled so anonymous traffic cannot spend a private API key. Self-hosted or private deployments can explicitly enable the optional AI-backed semantic reading.
+> Every generated sentence should be readable by a mathematician and traceable to the exact formal assumptions, objects, and conclusion from which it came.
 
-Try the current deployment at [leanscribe.agbanwajamal03.chatgpt.site](https://leanscribe.agbanwajamal03.chatgpt.site/).
+The public beta is available at [leanscribe.agbanwajamal03.chatgpt.site](https://leanscribe.agbanwajamal03.chatgpt.site/).
 
-## Features
+## What is implemented now
 
-- Paste, drag-and-drop, or open any UTF-8 `.lean` file
-- Detect theorems, lemmas, explicit corollaries, examples, definitions, axioms, structures, classes, instances, and inductive types
-- Preserve declaration types deterministically: a Lean theorem becomes a natural-language theorem, a lemma remains a lemma, and an explicit corollary remains a corollary in the preview, PDF, TeX, and CSV
-- Interpret the file globally instead of translating one symbol or line at a time
-- Produce an overview, prerequisites, per-declaration mathematical statements, proof strategies, dependencies, confidence levels, caveats, and a glossary
-- Translate common Lean and Unicode symbols into conventional LaTeX notation
-- Preview plain-English, LaTeX, and CSV output as the source changes
-- Download `.pdf`, `.tex`, and `.csv` files directly in the browser
-- Keep an always-available local fallback; expert mode clearly discloses when source is sent to OpenAI
-- Responsive, keyboard-accessible interface
+This release is the first slice of the **Trusted statement renderer** milestone.
 
-## Declaration type preservation
+- A Lean-native extractor loads an already-built module from its real project environment.
+- The semantic IR records elaborated binders, binder visibility, full types, conclusions, type dependencies, source ranges, documentation, Lean version and commit, transitive axioms, `sorryAx`, and `Lean.trustCompiler` use.
+- Literal rendering maps every binder, hypothesis, instance assumption, and conclusion to a coverage-ledger row.
+- The web UI visibly separates `unelaborated` pasted-source drafts from `elaborated` semantic publications.
+- Literal, polished, and explanatory views have different trust levels. Only complete elaborated coverage is eligible for the structural-check badge.
+- HTML, Markdown, LaTeX, PDF, CSV, and JSON exports are generated from one publication model. TeX, PDF, and CSV carry trust provenance alongside the statement.
+- Optional model-based polishing accepts semantic IR only. Raw `.lean` source is never sent to the model.
+- Mutation tests verify that changing a domain or conclusion changes the literal publication.
 
-LeanScribe treats the declaration keyword in the source as authoritative. Expert mode can improve the mathematical explanation, but it cannot silently change the declaration category.
+LeanScribe uses this exact wording for its strongest current claim:
 
-| Lean source | Natural-language output | Export heading |
+> Generated from a kernel-accepted formal statement; prose correspondence has passed LeanScribe’s structural checks.
+
+It does **not** call generated English “formally verified.” Structural correspondence is narrower than mathematical review.
+
+## Product boundary
+
+| Capability | Current status | Trust boundary |
 | --- | --- | --- |
-| `theorem result ...` | Theorem | `Natural-language Theorem: result` |
-| `lemma helper ...` | Lemma | `Natural-language Lemma: helper` |
-| `corollary consequence ...` | Corollary | `Natural-language Corollary: consequence` |
+| Statement rendering | Milestone 1 implementation | Elaborated IR plus complete coverage ledger can receive structural trust |
+| Proof explanation | Not implemented as a trusted capability | Tactic scripts are not assumed to be the best mathematical explanation |
+| Exposition generation | Clearly labeled lower-trust commentary | Motivation and intuition are interpretive and require review |
+| Document publishing | HTML, Markdown, TeX, PDF, CSV, JSON | All formats derive from the same publication record |
 
-For example:
+The initial user is a mathematician who opens a Lean project, selects a result, and wants a faithful statement suitable for a paper after minimal editing.
 
-```lean
-theorem identity_theorem (p : Prop) : p → p := by
-  intro hp
-  exact hp
+## Two input paths
 
-lemma identity_lemma (p : Prop) : p → p := by
-  intro hp
-  exact hp
-```
+### Trusted path: elaborated semantic IR
 
-Expert mode renders both statements in mathematical prose—“For every proposition `p`, if `p` holds, then `p` holds”—while retaining the first as a theorem and the second as a lemma. Their visible proof strategy is documented separately from the statement.
+The extractor works from Lean’s environment after elaboration. It does not use regular expressions to determine the trusted meaning of a declaration and it does not ask an LLM to recover hidden semantics from raw source.
 
-An explicit `corollary` is supported for Lean projects that define that command through custom syntax. If a mathematical corollary is written using `theorem` or `lemma`, LeanScribe preserves the keyword actually present instead of guessing a different category.
+Requirements: Lean `4.21.0` (the pinned toolchain), Lake, Node.js `>=22.13.0`, and npm.
 
-## Output formats
-
-- **PDF:** a readable document containing the overview, natural-language declarations, visible proof strategies, dependencies, caveats, and glossary
-- **TeX:** editable LaTeX with a declaration-specific heading, prose statement, mathematical display, and supporting documentation
-- **CSV:** one row per declaration, including `kind`, `natural_language_kind`, name, source line, prose, proof strategy, dependencies, confidence, caveats, Lean signature, and LaTeX
-
-All three downloads are generated from the same in-browser document model, so declaration types and content stay consistent across formats.
-
-## Getting started
-
-Requirements: Node.js `>=22.13.0` and npm.
+Build LeanScribe’s extractor:
 
 ```bash
 git clone https://github.com/JAgbanwa/LeanScribe.git
 cd LeanScribe
+lake build leanscribe_extract
+```
+
+Build the target project first, then run the extractor through the target project’s environment so its imports and package paths are available:
+
+```bash
+cd /path/to/target-project
+lake build
+lake env /path/to/LeanScribe/.lake/build/bin/leanscribe_extract \
+  MyProject.MyModule MyModule.leanscribe.json
+```
+
+Open the resulting `.leanscribe.json` in the LeanScribe website. The UI displays source ranges, semantic coverage, Lean/toolchain provenance, proof status, axioms, `sorryAx`, and native-evaluation trust-base use.
+
+### Convenience path: pasted source draft
+
+Pasting or opening a `.lean` file in the browser creates a fast, local, **unelaborated source preview**. It is useful for drafting and export experiments, but it cannot earn a semantic trust badge. The interface labels its ledger entries `provisional` and says that no semantic trust claim is made.
+
+This distinction is deliberate: Lean syntax is extensible, while elaboration resolves implicit arguments, coercions, type-class instances, macros, and notation.
+
+## Trust model
+
+LeanScribe exposes three prose levels:
+
+- **Literal:** deterministic and maximally explicit; the coverage ledger maps each semantic component to a prose span.
+- **Polished:** paper-style prose derived from the semantic IR or an author-supplied documentation string; still reviewable against the ledger.
+- **Explanatory:** generated interpretation, intuition, or proof commentary; visibly lower trust.
+
+The current semantic IR schema is `leanscribe.semantic-ir.v1`. Each declaration includes:
+
+- stable semantic ID, name, namespace, kernel kind, and editorial-classification provenance;
+- explicit, implicit, strict-implicit, and instance binders in elaborated order;
+- elaborated type, conclusion, type dependencies, documentation, and source range;
+- transitive axioms, `sorryAx`, native-evaluation marker, and proof status;
+- Lean version, Lean commit, extraction time, and optional repository/source provenance.
+
+The kernel does not preserve the author’s editorial distinction between `theorem` and `lemma`. The extractor therefore records the kernel kind and says when no editorial override was supplied; it does not invent “corollary.” Source-aware classification and `.leanscribe.toml` terminology overrides remain roadmap items.
+
+## Local web development
+
+```bash
 npm install
 npm run dev
 ```
 
-Open the local URL shown in the terminal.
-
-To enable expert semantic translation, copy the environment template and add an OpenAI API key on the server:
+Useful commands:
 
 ```bash
-cp .env.example .env.local
-# Set OPENAI_API_KEY in .env.local
-# Keep EXPERT_MODE_ENABLED=true for a private or controlled deployment
-npm run dev
+npm run build      # production web build
+npm test           # web, conversion, coverage-ledger, and mutation tests
+npm run lint       # ESLint
+npm run test:lean  # build the native extractor and fixture
 ```
 
-`OPENAI_MODEL` defaults to `gpt-5.6-sol`. Expert mode runs only when both `EXPERT_MODE_ENABLED=true` and `OPENAI_API_KEY` are present. Never commit `.env.local` or an API key.
+The public deployment is local-only and has no OpenAI API key. If a controlled self-hosted deployment enables optional polishing, it must set both `EXPERT_MODE_ENABLED=true` and `OPENAI_API_KEY`. The API rejects raw Lean source and accepts only a validated elaborated semantic bundle; requests use `store: false`.
 
-## Commands
+## Architecture
 
-```bash
-npm run dev     # Start the development server
-npm run build   # Create a production build
-npm test        # Build and run the rendered-page tests
-npm run lint    # Run ESLint
+```mermaid
+flowchart LR
+    A["Built Lean project"] --> B["Lean-native extractor"]
+    B --> C["leanscribe.semantic-ir.v1"]
+    C --> D["Deterministic literal renderer"]
+    C --> E["Optional constrained prose renderer"]
+    D --> F["Coverage and trust checks"]
+    E --> F
+    F --> G["HTML · Markdown · TeX · PDF · CSV · JSON"]
 ```
 
-## How conversion works
+Lean’s processing pipeline and `InfoTree` APIs are the intended foundation for richer source-to-semantic correspondence. See the [Lean elaboration reference](https://lean-lang.org/doc/reference/latest/Elaboration-and-Compilation/) and [InfoTree API](https://lean-lang.org/doc/api/Lean/Elab/InfoTree/Types.html). The current extractor starts from the compiled environment and declaration ranges; expression-level InfoTree spans are next.
 
-The local engine scans top-level declarations and translates common Lean syntax immediately. When expert mode is configured, `/api/translate` sends the complete source to the OpenAI Responses API with a strict semantic-document schema. The schema includes theorem, lemma, and corollary as distinct declaration kinds. The model is instructed to preserve quantifiers, assumptions, and declaration categories; distinguish statements from proof methods; track dependencies; flag ambiguity; and treat Lean comments as source data rather than instructions. The structured result is merged with locally extracted signatures. The locally parsed source keyword remains authoritative for each matched declaration, so expert mode cannot silently relabel a theorem as a lemma. One shared document model then drives the browser preview and all three exports.
+LeanScribe should complement whole-library documentation tools such as [doc-gen4](https://github.com/leanprover/doc-gen4), not recreate their project build and browsing infrastructure.
 
-This is the reverse direction of a formalization assistant: formal Lean becomes human-facing mathematical exposition. LeanScribe is independent of and is not affiliated with Aristotle or Harmonic.
+## Security boundary
 
-LeanScribe is a documentation tool, not a Lean compiler, proof checker, or guarantee that AI prose is mathematically equivalent to the source. It preserves source signatures and reports uncertainty, but expert output still requires human review. Run the source through Lean 4 or Lake for formal verification before publishing.
+Elaborating an uploaded Lean project is running untrusted code: Lean elaborators can perform IO. The public beta therefore does **not** accept server-side project uploads or GitHub repositories and does not claim sandboxed remote elaboration.
+
+Before those features ship, each job must run as an ephemeral nonprivileged workload with no network or host secrets, read-only inputs, controlled caches, strict resource/process limits, archive/path protections, audited Lean and TeX toolchains, TeX shell escape disabled, sanitized output, rate limits, and retention controls. See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md).
+
+For formal trust, LeanScribe reports transitive axioms and incomplete proofs rather than hiding them. The relevant Lean references are [Axioms](https://lean-lang.org/doc/reference/latest/Axioms/) and [Validating Lean Proofs](https://lean-lang.org/doc/reference/latest/ValidatingProofs/).
+
+## Roadmap and evaluation
+
+The detailed, acceptance-test-driven roadmap is in [docs/ROADMAP.md](docs/ROADMAP.md). The evaluation protocol is in [docs/EVALUATION.md](docs/EVALUATION.md).
+
+The next milestone is not general proof narration. It is making statement fidelity exceptional: richer InfoTree alignment, source hashes and repository commits, author-preserved editorial kinds, configuration/terminology locks, project outline and batch conversion, accessible MathML, and a 200–500 declaration expert-reviewed Lean 4/mathlib benchmark.
 
 ## Project structure
 
 ```text
-app/
-  api/translate/route.ts     Server-side expert semantic translation
-  components/LeanScribe.tsx  Interactive converter UI
-  globals.css                Responsive visual design
-  layout.tsx                 Site metadata and fonts
-  page.tsx                   Home route
-lib/
-  lean-converter.ts          Parsing, natural language, TeX, CSV, and PDF generation
-  semantic-schema.ts         Strict expert-output schema and translation instructions
-tests/
-  rendered-html.test.mjs     Production-render smoke tests
-  lean-converter.test.ts     Declaration parsing and type-preservation tests
+LeanScribe/Extractor.lean         Lean-native semantic extractor CLI
+LeanScribe/ExtractorFixture.lean  Axiom/sorry/source-range fixture
+lib/semantic-ir.ts               IR validation, literal prose, coverage, publishing
+lib/lean-converter.ts            Draft preview plus TeX/CSV/PDF generation
+app/components/LeanScribe.tsx     Synchronized source, prose, ledger, and exports
+app/api/translate/route.ts        Optional IR-only constrained prose endpoint
+docs/                             Architecture, threat model, roadmap, evaluation
+tests/                            Rendering, classification, ledger, mutation tests
 ```
-
-## Privacy
-
-Local conversion and all file generation happen in the browser. Expert mode sends the complete pasted or opened Lean source to this app's server and then to OpenAI for semantic analysis; the interface discloses this beside the expert control. The API request uses `store: false`. Do not use expert mode for source you are not permitted to share with the configured provider.
-
-## Deployment
-
-The public LeanScribe deployment intentionally has no `OPENAI_API_KEY` and sets `EXPERT_MODE_ENABLED=false`. Anyone can use local conversion and all three downloads without an account, while Lean source stays in the browser.
-
-For a private or otherwise controlled deployment, configure `OPENAI_API_KEY` as a server-side secret, set `EXPERT_MODE_ENABLED=true`, and optionally set `OPENAI_MODEL`. The key must never be exposed through a `NEXT_PUBLIC_` variable or embedded in browser JavaScript. Without both the enable flag and key, expert requests return a safe `503` response and local conversion remains available.
-
-The production deployment uses a server-side secret; users should never paste an API key into the LeanScribe source editor or commit one to this repository.
-
-## Validation
-
-`npm test` creates a production build and runs coverage for server rendering, safe behavior without an API key, declaration parsing, explicit corollary support, and deterministic protection against model-driven theorem/lemma reclassification. Run `npm run lint` alongside it before publishing changes.
 
 ## License
 

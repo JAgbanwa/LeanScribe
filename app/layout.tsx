@@ -19,9 +19,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const title = "LeanScribe — Proof-aware Lean to PDF, TeX & CSV";
+  const title = "LeanScribe — Trusted Semantic Publishing for Lean";
   const description =
-    "Reverse-formalize Lean 4 source into rigorous natural-language PDF, TeX, and CSV documentation with whole-file context.";
+    "Publish elaborated Lean 4 declarations as readable, traceable mathematical literature with semantic coverage ledgers.";
 
   return {
     metadataBase: new URL(origin),
@@ -32,13 +32,13 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: "website",
-      images: [{ url: `${origin}/og.png`, width: 1731, height: 909, alt: "LeanScribe — From formal proof to finished page." }],
+      images: [{ url: `${origin}/og-traceable.png`, width: 1731, height: 909, alt: "LeanScribe — Formal declarations, traceable literature." }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [`${origin}/og.png`],
+      images: [`${origin}/og-traceable.png`],
     },
   };
 }

@@ -3,8 +3,9 @@ import {
   SEMANTIC_TRANSLATION_SCHEMA,
   type SemanticTranslation,
 } from "@/lib/semantic-schema";
+import { isSemanticIRBundle } from "@/lib/semantic-ir";
 
-const MAX_SOURCE_CHARACTERS = 250_000;
+const MAX_SEMANTIC_IR_CHARACTERS = 500_000;
 
 type OpenAIResponse = {
   error?: { message?: string };
@@ -43,23 +44,31 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  let body: { source?: unknown; filename?: unknown };
+  let body: { semanticIR?: unknown; filename?: unknown };
   try {
-    body = (await request.json()) as { source?: unknown; filename?: unknown };
+    body = (await request.json()) as { semanticIR?: unknown; filename?: unknown };
   } catch {
     return json({ error: "The request body must be valid JSON." }, 400);
   }
 
-  const source = typeof body.source === "string" ? body.source.trim() : "";
+  if (!isSemanticIRBundle(body.semanticIR)) {
+    return json(
+      {
+        error: "Expert prose requires elaborated LeanScribe semantic IR; raw Lean source is not accepted.",
+        code: "SEMANTIC_IR_REQUIRED",
+      },
+      400,
+    );
+  }
+  const semanticIR = JSON.stringify(body.semanticIR);
   const filename =
     typeof body.filename === "string" && body.filename.trim()
       ? body.filename.trim().slice(0, 180)
       : "Main.lean";
 
-  if (!source) return json({ error: "Paste a Lean file before translating." }, 400);
-  if (source.length > MAX_SOURCE_CHARACTERS) {
+  if (semanticIR.length > MAX_SEMANTIC_IR_CHARACTERS) {
     return json(
-      { error: `This file exceeds the ${MAX_SOURCE_CHARACTERS.toLocaleString()} character limit.` },
+      { error: `This semantic bundle exceeds the ${MAX_SEMANTIC_IR_CHARACTERS.toLocaleString()} character limit.` },
       413,
     );
   }
@@ -79,7 +88,7 @@ export async function POST(request: Request): Promise<Response> {
         reasoning: { effort: "high" },
         max_output_tokens: 32_000,
         instructions: SEMANTIC_SYSTEM_PROMPT,
-        input: JSON.stringify({ filename, leanSource: source }),
+        input: JSON.stringify({ filename, semanticIR: body.semanticIR }),
         text: {
           format: {
             type: "json_schema",

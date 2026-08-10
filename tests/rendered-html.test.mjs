@@ -21,18 +21,21 @@ test("server-renders the LeanScribe converter", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>LeanScribe/);
-  assert.match(html, /From formal proof/);
+  assert.match(html, /Formal declarations/);
   assert.match(html, /Lean conversion workspace/);
   assert.match(html, /Paste Lean source/);
   assert.match(html, /Public local mode/);
-  assert.match(html, /Private conversion in your browser/);
+  assert.match(html, /Two clearly separated trust paths/);
   assert.match(html, /Nothing is uploaded/);
   assert.match(html, /Natural-language(?:\s|<!--.*?-->)*Theorem/);
   assert.match(html, /Natural-language(?:\s|<!--.*?-->)*Lemma/);
-  assert.match(html, /This theorem states: For every natural number n, n plus 0 equals n\./);
+  assert.match(html, /No semantic trust claim/);
   assert.match(html, /Download \.tex/);
   assert.match(html, /Download \.pdf/);
   assert.match(html, /Download \.csv/);
+  assert.match(html, /Download \.md/);
+  assert.match(html, /Download \.html/);
+  assert.match(html, /Semantic coverage ledger/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/);
 });
 
@@ -67,5 +70,8 @@ test("public mode rejects expert translation even if a key exists", async () => 
 test("removes the temporary starter preview", async () => {
   await assert.rejects(access(new URL("../app/_sites-preview", import.meta.url)));
   const packageJson = await readFile(new URL("../package.json", import.meta.url), "utf8");
+  const expertRoute = await readFile(new URL("../app/api/translate/route.ts", import.meta.url), "utf8");
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
+  assert.match(expertRoute, /isSemanticIRBundle/);
+  assert.doesNotMatch(expertRoute, /leanSource/);
 });

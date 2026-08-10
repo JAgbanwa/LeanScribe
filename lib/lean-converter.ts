@@ -25,6 +25,14 @@ export type LeanDeclaration = {
   dependencies?: string[];
   caveats?: string[];
   confidence?: "high" | "medium" | "low";
+  provenance?: {
+    extractionStatus: "elaborated" | "unelaborated" | "incomplete";
+    sourceHash: string;
+    coverage: string;
+    proofStatus: string;
+    axioms: string[];
+    trustStatement: string;
+  };
 };
 
 export type ConversionResult = {
@@ -341,6 +349,12 @@ function buildCsv(title: string, declarations: LeanDeclaration[]): string {
     "caveats",
     "lean_signature",
     "latex",
+    "extraction_status",
+    "semantic_coverage",
+    "proof_status",
+    "axioms",
+    "source_fingerprint",
+    "trust_statement",
   ];
   const rows = declarations.map((declaration) => [
     title,
@@ -355,6 +369,12 @@ function buildCsv(title: string, declarations: LeanDeclaration[]): string {
     (declaration.caveats ?? []).join("; "),
     declaration.leanType,
     declaration.latex,
+    declaration.provenance?.extractionStatus ?? "unelaborated",
+    declaration.provenance?.coverage ?? "not checked",
+    declaration.provenance?.proofStatus ?? "unelaborated",
+    declaration.provenance?.axioms.join("; ") ?? "not audited",
+    declaration.provenance?.sourceHash ?? "not supplied",
+    declaration.provenance?.trustStatement ?? "No semantic trust claim.",
   ]);
   return [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
 }
@@ -528,8 +548,11 @@ function buildTex(
           const caveats = declaration.caveats?.length
             ? `\n\n\\paragraph{Caveats.} ${escapeTexText(declaration.caveats.join(" "))}`
             : "";
+          const provenance = declaration.provenance
+            ? `\n\n\\paragraph{Formal trust.} ${escapeTexText(declaration.provenance.trustStatement)} Coverage: ${escapeTexText(declaration.provenance.coverage)}. Proof status: ${escapeTexText(declaration.provenance.proofStatus)}. Axioms: ${escapeTexText(declaration.provenance.axioms.join(", ") || "none")}. Source: \\texttt{${escapeTexText(declaration.provenance.sourceHash)}}.`
+            : "";
           return `\\subsection*{Natural-language ${capitalize(declaration.kind)}: \\texttt{${escapeTexText(declaration.name)}}}${note}
-\\noindent ${escapeTexText(declaration.naturalLanguage)}${strategy}${dependencies}${caveats}
+\\noindent ${escapeTexText(declaration.naturalLanguage)}${strategy}${dependencies}${caveats}${provenance}
 
 \\[
   ${declaration.latex}
@@ -563,6 +586,22 @@ ${glossary.length ? `\\section*{Glossary}\n${glossary.map((entry) => `\\paragrap
 
 export function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+export function refreshConversionExports(result: ConversionResult): ConversionResult {
+  return {
+    ...result,
+    tex: buildTex(
+      result.title,
+      result.declarations,
+      result.imports,
+      result.overview,
+      result.prerequisites,
+      result.glossary,
+      result.warnings,
+    ),
+    csv: buildCsv(result.title, result.declarations),
+  };
 }
 
 function asciiPdfText(value: string): string {
@@ -636,6 +675,14 @@ export function buildPdf(result: ConversionResult): Blob {
     }
     if (declaration.caveats?.length) {
       wrapText(`Caveats: ${declaration.caveats.join(" ")}`, 80).forEach((line) =>
+        lines.push(`   ${line}`),
+      );
+    }
+    if (declaration.provenance) {
+      wrapText(`Formal trust: ${declaration.provenance.trustStatement}`, 80).forEach((line) =>
+        lines.push(`   ${line}`),
+      );
+      wrapText(`Coverage: ${declaration.provenance.coverage}; proof: ${declaration.provenance.proofStatus}; axioms: ${declaration.provenance.axioms.join(", ") || "none"}; source: ${declaration.provenance.sourceHash}`, 80).forEach((line) =>
         lines.push(`   ${line}`),
       );
     }
