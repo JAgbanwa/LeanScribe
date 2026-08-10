@@ -4,6 +4,8 @@ LeanScribe reverse-formalizes Lean 4 source into rigorous natural-language docum
 
 An instant, rule-based converter remains available in the browser. Pasting, dropping, or opening a file also starts the optional AI-backed semantic reading when the server is configured.
 
+Try the current deployment at [leanscribe.agbanwajamal03.chatgpt.site](https://leanscribe.agbanwajamal03.chatgpt.site/).
+
 ## Features
 
 - Paste, drag-and-drop, or open any UTF-8 `.lean` file
@@ -16,6 +18,40 @@ An instant, rule-based converter remains available in the browser. Pasting, drop
 - Download `.pdf`, `.tex`, and `.csv` files directly in the browser
 - Keep an always-available local fallback; expert mode clearly discloses when source is sent to OpenAI
 - Responsive, keyboard-accessible interface
+
+## Declaration type preservation
+
+LeanScribe treats the declaration keyword in the source as authoritative. Expert mode can improve the mathematical explanation, but it cannot silently change the declaration category.
+
+| Lean source | Natural-language output | Export heading |
+| --- | --- | --- |
+| `theorem result ...` | Theorem | `Natural-language Theorem: result` |
+| `lemma helper ...` | Lemma | `Natural-language Lemma: helper` |
+| `corollary consequence ...` | Corollary | `Natural-language Corollary: consequence` |
+
+For example:
+
+```lean
+theorem identity_theorem (p : Prop) : p → p := by
+  intro hp
+  exact hp
+
+lemma identity_lemma (p : Prop) : p → p := by
+  intro hp
+  exact hp
+```
+
+Expert mode renders both statements in mathematical prose—“For every proposition `p`, if `p` holds, then `p` holds”—while retaining the first as a theorem and the second as a lemma. Their visible proof strategy is documented separately from the statement.
+
+An explicit `corollary` is supported for Lean projects that define that command through custom syntax. If a mathematical corollary is written using `theorem` or `lemma`, LeanScribe preserves the keyword actually present instead of guessing a different category.
+
+## Output formats
+
+- **PDF:** a readable document containing the overview, natural-language declarations, visible proof strategies, dependencies, caveats, and glossary
+- **TeX:** editable LaTeX with a declaration-specific heading, prose statement, mathematical display, and supporting documentation
+- **CSV:** one row per declaration, including `kind`, `natural_language_kind`, name, source line, prose, proof strategy, dependencies, confidence, caveats, Lean signature, and LaTeX
+
+All three downloads are generated from the same in-browser document model, so declaration types and content stay consistent across formats.
 
 ## Getting started
 
@@ -51,9 +87,7 @@ npm run lint    # Run ESLint
 
 ## How conversion works
 
-The local engine scans top-level declarations and translates common Lean syntax immediately. When expert mode is configured, `/api/translate` sends the complete source to the OpenAI Responses API with a strict semantic-document schema. The model is instructed to preserve quantifiers, assumptions, and declaration categories; distinguish statements from proof methods; track dependencies; flag ambiguity; and treat Lean comments as source data rather than instructions. The structured result is merged with locally extracted signatures. The source keyword remains authoritative for each declaration's type, so expert mode cannot silently relabel a theorem as a lemma. One shared document model then drives the browser preview and all three exports.
-
-Lean 4's standard declaration commands are `theorem` and `example`, while Mathlib also commonly uses `lemma`. Some projects add an explicit `corollary` command through custom syntax; LeanScribe recognizes it. When a mathematical corollary is written with `theorem` or `lemma`, LeanScribe preserves the command actually present in the source rather than guessing a different category.
+The local engine scans top-level declarations and translates common Lean syntax immediately. When expert mode is configured, `/api/translate` sends the complete source to the OpenAI Responses API with a strict semantic-document schema. The schema includes theorem, lemma, and corollary as distinct declaration kinds. The model is instructed to preserve quantifiers, assumptions, and declaration categories; distinguish statements from proof methods; track dependencies; flag ambiguity; and treat Lean comments as source data rather than instructions. The structured result is merged with locally extracted signatures. The locally parsed source keyword remains authoritative for each matched declaration, so expert mode cannot silently relabel a theorem as a lemma. One shared document model then drives the browser preview and all three exports.
 
 This is the reverse direction of a formalization assistant: formal Lean becomes human-facing mathematical exposition. LeanScribe is independent of and is not affiliated with Aristotle or Harmonic.
 
@@ -83,6 +117,12 @@ Local conversion and all file generation happen in the browser. Expert mode send
 ## Deployment
 
 Configure `OPENAI_API_KEY` as a server-side secret and optionally set `OPENAI_MODEL`. The key must never be exposed through a `NEXT_PUBLIC_` variable or embedded in browser JavaScript. Without a key, the app continues to provide its local conversion and the expert endpoint returns a safe `503 AI_NOT_CONFIGURED` response.
+
+The production deployment uses a server-side secret; users should never paste an API key into the LeanScribe source editor or commit one to this repository.
+
+## Validation
+
+`npm test` creates a production build and runs coverage for server rendering, safe behavior without an API key, declaration parsing, explicit corollary support, and deterministic protection against model-driven theorem/lemma reclassification. Run `npm run lint` alongside it before publishing changes.
 
 ## License
 
