@@ -1,1 +1,0 @@
-XML PARTIAL IMPORT: Wachttijd van de bushalte moet positief zijn!
